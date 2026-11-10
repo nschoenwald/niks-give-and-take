@@ -12,7 +12,7 @@
  * @property {string|null} [sceneId]         Scene the requesting user is viewing (distance rule).
  */
 
-import { MODULE_ID, OFFER_TIMEOUT, QUERY, TEMPLATE_PATH, logError, t, tf } from "./constants.js";
+import { MODULE_ID, OFFER_TIMEOUT, OPERATION_OPTIONS, QUERY, TEMPLATE_PATH, logError, t, tf } from "./constants.js";
 import * as sys from "./dnd5e.js";
 import { checkTransfer, isTake, playerOwners } from "./rules.js";
 import { APPROVAL, CHAT, getSetting } from "./settings.js";
@@ -190,8 +190,18 @@ async function processTransfer(request, user) {
     if ( !check.ok ) return { status: "error", reason: check.reason, data: check.data };
     try {
       const outcome = resolved.kind === "item" ? await moveItem(resolved) : await moveCurrency(resolved);
-      const summary = describe(resolved, user, outcome);
-      await postMessage(resolved, user, outcome, summary, check.remind);
+      const note = {
+        kind: resolved.kind,
+        take: isTake(resolved.source, user),
+        sourceUuid: resolved.source.uuid,
+        targetUuid: resolved.target.uuid,
+        itemUuid: outcome.item?.uuid ?? null,
+        quantity: resolved.quantity,
+        amounts: outcome.amounts ?? null,
+        remind: check.remind
+      };
+      const summary = describe({ ...note, source: resolved.source, target: resolved.target, item: outcome.item });
+      await announce(note);
       Hooks.callAll(`${MODULE_ID}.transferred`, {
         kind: resolved.kind, source: resolved.source, target: resolved.target, item: outcome.item ?? null,
         quantity: resolved.quantity, amounts: outcome.amounts ?? null, user
@@ -218,14 +228,19 @@ async function moveItem({ source, target, item, quantity }) {
   let received;
   const stack = contents.length ? null : sys.findStack(target, first);
   if ( stack ) {
-    await stack.update(sys.quantityUpdate(stack, sys.getQuantity(stack) + quantity));
+    await stack.update(sys.quantityUpdate(stack, sys.getQuantity(stack) + quantity), { ...OPERATION_OPTIONS });
     received = stack;
   } else {
-    [received] = await Item.implementation.createDocuments([first, ...contents], { parent: target, keepId: true });
+    [received] = await Item.implementation.createDocuments([first, ...contents], {
+      ...OPERATION_OPTIONS, parent: target, keepId: true
+    });
   }
 
-  if ( quantity >= available ) await item.delete({ deleteContents: true });
-  else await item.update(sys.quantityUpdate(item, available - quantity));
+  if ( quantity >= available ) {
+    const ids = await sys.getDeleteIds(item);
+    await Item.implementation.deleteDocuments(ids, { ...OPERATION_OPTIONS, parent: source });
+  }
+  else await item.update(sys.quantityUpdate(item, available - quantity), { ...OPERATION_OPTIONS });
   return { item: received };
 }
 
@@ -240,8 +255,8 @@ async function moveCurrency({ source, target, amounts }) {
   const moved = Object.fromEntries(Object.entries(amounts).filter(([, v]) => v > 0));
   const added = Object.fromEntries(Object.entries(moved).map(([k, v]) => [k, gets[k] + v]));
   const left = Object.fromEntries(Object.entries(moved).map(([k, v]) => [k, have[k] - v]));
-  await target.update(sys.currencyUpdate(added));
-  await source.update(sys.currencyUpdate(left));
+  await target.update(sys.currencyUpdate(added), { ...OPERATION_OPTIONS });
+  await source.update(sys.currencyUpdate(left), { ...OPERATION_OPTIONS });
   return { amounts: moved };
 }
 
@@ -347,51 +362,116 @@ function itemLabel(name, quantity) {
 
 /**
  * Text of a finished transfer: plain (for notifications) and HTML (for the chat card).
- * @param {object} resolved
- * @param {User} user
- * @param {object} outcome
+ * @param {object} info
+ * @param {"item"|"currency"} info.kind
+ * @param {boolean} info.take
+ * @param {Actor} info.source
+ * @param {Actor} info.target
+ * @param {Item|null} info.item         The item on the target.
+ * @param {number} info.quantity
+ * @param {Record<string, number>|null} info.amounts
  * @returns {{text: string, html: string}}
  */
-function describe({ kind, source, target, quantity }, user, outcome) {
-  const key = `Chat.${isTake(source, user) ? "Took" : "Gave"}`;
-  const plainWhat = kind === "item" ? itemLabel(outcome.item.name, quantity) : sys.formatCurrency(outcome.amounts);
+function describe({ kind, take, source, target, item, quantity, amounts }) {
+  const key = `Chat.${take ? "Took" : "Gave"}`;
+  const plainWhat = kind === "item" ? itemLabel(item.name, quantity) : sys.formatCurrency(amounts);
   const htmlWhat = kind === "item"
-    ? itemLabel(`@UUID[${outcome.item.uuid}]{${escapeHTML(outcome.item.name)}}`, quantity)
+    ? itemLabel(`@UUID[${item.uuid}]{${escapeHTML(item.name)}}`, quantity)
     : `<strong>${escapeHTML(plainWhat)}</strong>`;
-  const names = { source: source.name, target: target.name };
   return {
-    text: tf(key, { ...names, what: plainWhat }),
+    text: tf(key, { source: source.name, target: target.name, what: plainWhat }),
     html: tf(key, {
-      source: `<strong>${escapeHTML(names.source)}</strong>`,
-      target: `<strong>${escapeHTML(names.target)}</strong>`,
+      source: `<strong>${escapeHTML(source.name)}</strong>`,
+      target: `<strong>${escapeHTML(target.name)}</strong>`,
       what: htmlWhat
     })
   };
 }
 
 /**
- * Post the chat message about a finished transfer, as set in the settings.
- * @param {object} resolved
- * @param {User} user
- * @param {object} outcome
- * @param {{html: string}} summary
- * @param {boolean} remind  Add the combat reminder.
+ * Post the chat message of a finished transfer. The active GM creates it, so players can't edit or delete it: a
+ * player who performed the transfer on their own client sends the facts to the GM, who builds the message from the
+ * documents. Without an active GM, the player creates it.
+ * @param {object} note  Plain facts of the transfer (UUIDs and numbers), see `processTransfer`.
  */
-async function postMessage({ kind, source, target, item }, user, outcome, summary, remind) {
+async function announce(note) {
+  if ( getSetting("chatMessages") === CHAT.off ) return;
+  if ( !game.user.isGM ) {
+    const gm = game.users.activeGM;
+    if ( gm && game.user.hasPermission("QUERY_USER") ) {
+      try {
+        await gm.query(QUERY.message, note);
+        return;
+      } catch(err) {
+        logError(err);
+      }
+    }
+  }
+  await createMessage(note, game.user);
+}
+
+/**
+ * The GM-side handler of the message query.
+ * @param {object} note
+ * @param {{user: User}} context
+ * @returns {Promise<boolean>}
+ */
+export async function onMessageQuery(note, { user }) {
+  if ( !game.user.isActiveGM ) throw new Error("Not the active GM");
+  await createMessage(note, user);
+  return true;
+}
+
+/**
+ * The speaker of a transfer message: the actor, without a token. Built by hand rather than with
+ * `ChatMessage.getSpeaker`, which picks one of the actor's tokens; in Nik's world a module then replaced the alias of
+ * token speakers with the GM's name.
+ * @param {Actor} actor
+ * @returns {object}
+ */
+function speakerFor(actor) {
+  const token = actor.isToken ? actor.token : null;
+  return { scene: token?.parent?.id ?? null, actor: actor.id, token: token?.id ?? null, alias: actor.name };
+}
+
+/**
+ * Build and create the chat message from the transfer's facts.
+ * @param {object} note
+ * @param {User} user  The user who performed the transfer.
+ */
+async function createMessage(note, user) {
   const mode = getSetting("chatMessages");
   if ( mode === CHAT.off ) return;
-  const actor = isTake(source, user) ? target : source;
+  const source = await fromUuid(note.sourceUuid);
+  const target = await fromUuid(note.targetUuid);
+  const item = note.itemUuid ? await fromUuid(note.itemUuid) : null;
+  if ( !(source instanceof Actor) || !(target instanceof Actor) ) return;
+  if ( (note.kind === "item") && (item?.parent !== target) ) return;
+  // Only someone involved in the transfer can have it announced
+  if ( !user.isGM && !source.testUserPermission(user, "OWNER") && !target.testUserPermission(user, "OWNER") ) return;
+
+  const quantity = Math.max(1, Math.round(Number(note.quantity)) || 1);
+  const amounts = {};
+  for ( const [k, v] of Object.entries(note.amounts ?? {}) ) {
+    const value = Math.round(Number(v));
+    if ( value > 0 ) amounts[k] = value;
+  }
+  const take = !!note.take;
+  const summary = describe({ kind: note.kind, take, source, target, item, quantity, amounts });
+  const actor = take ? target : source;
   const content = await renderTemplate(`${TEMPLATE_PATH}/chat-card.hbs`, {
-    img: kind === "item" ? outcome.item.img : null,
-    icon: kind === "item" ? null : "fa-solid fa-coins",
+    img: item?.img ?? null,
+    icon: item ? null : "fa-solid fa-coins",
     text: summary.html,
-    reminder: remind ? tf("Chat.CombatReminder", { name: actor.name }) : null
+    reminder: note.remind ? tf("Chat.CombatReminder", { name: actor.name }) : null
   });
   const data = {
     author: game.user.id,
-    speaker: ChatMessage.getSpeaker({ actor }),
+    speaker: speakerFor(actor),
     content,
-    flags: { [MODULE_ID]: { transfer: { kind, source: source.uuid, target: target.uuid, item: item?.uuid ?? null } } }
+    flags: {
+      [MODULE_ID]: { transfer: { kind: note.kind, source: source.uuid, target: target.uuid, item: item?.uuid ?? null } }
+    }
   };
   if ( mode === CHAT.whisper ) {
     const ids = new Set([user.id, ...playerOwners(source).map(u => u.id), ...playerOwners(target).map(u => u.id)]);

@@ -7,12 +7,13 @@ import { openCurrencyDialog, openItemDialog } from "./dialogs.js";
 import { registerEntryPoints } from "./entry-points.js";
 import { getTargets } from "./rules.js";
 import { registerSettings } from "./settings.js";
-import { onOfferQuery, onTransferQuery, requestTransfer } from "./transfer.js";
+import { onMessageQuery, onOfferQuery, onTransferQuery, requestTransfer } from "./transfer.js";
 
 Hooks.once("init", () => {
   registerSettings();
   CONFIG.queries[QUERY.transfer] = onTransferQuery;
   CONFIG.queries[QUERY.offer] = onOfferQuery;
+  CONFIG.queries[QUERY.message] = onMessageQuery;
   registerEntryPoints();
   foundry.applications.handlebars.loadTemplates([
     `${TEMPLATE_PATH}/targets.hbs`,

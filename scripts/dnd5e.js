@@ -95,6 +95,18 @@ export async function countContents(item) {
 }
 
 /**
+ * IDs of the item and, for containers, everything inside it (nested too). dnd5e's own `deleteContents` deletes the
+ * contents in a second operation without the original options, so a transfer deletes them in one call itself.
+ * @param {Item} item
+ * @returns {Promise<string[]>}
+ */
+export async function getDeleteIds(item) {
+  if ( !isContainer(item) ) return [item.id];
+  const contents = await item.system.allContainedItems;
+  return [item.id, ...(contents ? Array.from(contents.map(i => i.id)) : [])];
+}
+
+/**
  * Build the creation data for an item (and its contents, for containers) on another actor.
  * @param {Item} item       The item on the source actor.
  * @param {number} quantity The quantity that changes hands.

@@ -45,7 +45,9 @@ What happens to the item:
 - **Unidentified** items stay unidentified, and their real name doesn't show up in the dialog or the chat message.
 - The item's own effects (e.g. a magic item's bonuses) travel with it.
 
-A chat message tells the table what happened, e.g. *"Aria gave 3× Potion of Healing to Bren."* The item in the message is a link.
+A chat message tells the table what happened, e.g. *"Aria gave 3× Potion of Healing to Bren."* The item in the message is a link. The GM posts these messages, so players can't edit or delete them (without a GM online, the player's own client posts it).
+
+With **[Nik's Tiny Change Logs](https://github.com/nschoenwald/niks-tiny-changelogs)** 14.19.0 or newer, a transfer doesn't also show up there as an "added" and a "deleted" line.
 
 ## 💰 Giving Money
 

@@ -9,8 +9,16 @@ export const QUERY = {
   /** Player → active GM: perform a transfer the player can't perform themselves. */
   transfer: `${MODULE_ID}.transfer`,
   /** GM → recipient's player (or the GM's own client): accept or decline an offer. */
-  offer: `${MODULE_ID}.offer`
+  offer: `${MODULE_ID}.offer`,
+  /** Player → active GM: post the chat message of a transfer the player performed, so the GM authors it. */
+  message: `${MODULE_ID}.message`
 };
+
+/**
+ * Operation options added to every create, update and delete of a transfer. Nik's Tiny Change Logs skips these
+ * operations, since the transfer posts its own message.
+ */
+export const OPERATION_OPTIONS = Object.freeze({ niksTinyChangelogs: Object.freeze({ skip: true }) });
 
 /** How long a recipient or the GM has to answer an offer, in milliseconds. */
 export const OFFER_TIMEOUT = 60_000;

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.1.0] - 2026-11-10
+
+### Added
+- **Nik's Tiny Change Logs**: Transfers no longer show up a second time as "added" and "deleted" lines in Tiny Change Logs (needs Tiny Change Logs 14.19.0 or newer).
+
+### Changed
+- **Chat Messages**: The GM now posts every transfer message, also when a player hands something between two of their own characters, so players can't edit or delete them.
+
+### Fixed
+- **Chat Messages**: Transfer messages show the giving character's name in the header again, instead of the GM's name, when that character has a token on the scene.
+
 ## [14.0.0] - 2026-11-10
 
 ### Added
