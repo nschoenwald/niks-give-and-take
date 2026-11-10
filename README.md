@@ -17,6 +17,7 @@ Lets players hand items and money to other characters and to the party, and take
 ## ⚡ Quick Navigation
 
 - [🎒 Giving Items](#-giving-items)
+- [🎁 Handing Out Items (GM)](#-handing-out-items-gm)
 - [💰 Giving Money](#-giving-money)
 - [🏕️ Taking from the Party](#️-taking-from-the-party)
 - [✅ Approval](#-approval)
@@ -48,6 +49,12 @@ What happens to the item:
 A chat message tells the table what happened, e.g. *"Aria gave 3× Potion of Healing to Bren."* The item in the message is a link. The GM posts these messages, so players can't edit or delete them (without a GM online, the player's own client posts it).
 
 With **[Nik's Tiny Change Logs](https://github.com/nschoenwald/niks-tiny-changelogs)** 14.19.0 or newer, a transfer doesn't also show up there as an "added" and a "deleted" line.
+
+## 🎁 Handing Out Items (GM)
+
+The GM can hand out loot straight from the **Items sidebar** or an **item compendium**: right-click a physical item and choose **Give to…**. Pick the recipient (the party, its members or any player character) and how many. The recipient gets a copy; the item in the sidebar or compendium stays where it is. The copy stacks onto a matching item the recipient already has, containers come with their contents, and the chat message reads e.g. *"Bren received 3× Potion of Healing."*
+
+Players don't see this option, since it creates new items.
 
 ## 💰 Giving Money
 
@@ -95,12 +102,12 @@ The API is available at `game.modules.get("niks-give-and-take").api` once the `r
 
 | Function | Description |
 |---|---|
-| `openItemDialog(item, {target})` | Opens the give (or take) dialog for an owned item. `target` preselects a recipient actor. |
+| `openItemDialog(item, {target})` | Opens the give (or take) dialog for an owned item, or the GM's hand-out dialog for a sidebar or compendium item. `target` preselects a recipient actor. |
 | `openCurrencyDialog(actor, {target})` | Opens the give (or take) money dialog for an actor. |
 | `requestTransfer(request)` | Transfers without a dialog, with the same checks and approval. `request`: `{kind: "item", sourceUuid, targetUuid, itemId, quantity}` or `{kind: "currency", sourceUuid, targetUuid, amounts: {gp: 5}}`. Resolves to `{status: "done" \| "declined" \| "expired" \| "error"}`. |
 | `getTargets(actor, user)` | The actors a user may transfer to from this actor. |
 
-The hook `niks-give-and-take.transferred` fires on the client that performed a transfer, with `{kind, source, target, item, quantity, amounts, user}`. `item` is the item on the recipient.
+The hook `niks-give-and-take.transferred` fires on the client that performed a transfer, with `{kind, source, target, item, quantity, amounts, user}`. `item` is the item on the recipient. `kind` is `"item"`, `"currency"` or `"grant"` (a GM handed out a sidebar or compendium item; `source` is `null`).
 
 ## 📦 Installation
 

@@ -14,8 +14,12 @@
   <div class="form-group ngt-quantity">
     <label>{{localize "NGT.Dialog.Quantity"}}</label>
     <div class="form-fields">
+      {{#if quantity.max}}
       <input type="range" data-quantity min="1" max="{{quantity.max}}" step="1" value="{{quantity.value}}">
       <input type="number" name="quantity" data-quantity min="1" max="{{quantity.max}}" step="1" value="{{quantity.value}}">
+      {{else}}
+      <input type="number" name="quantity" min="1" step="1" value="{{quantity.value}}">
+      {{/if}}
     </div>
   </div>
   {{/if}}

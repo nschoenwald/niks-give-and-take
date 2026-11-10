@@ -14,7 +14,7 @@
 
 import { MODULE_ID, OFFER_TIMEOUT, OPERATION_OPTIONS, QUERY, TEMPLATE_PATH, logError, t, tf } from "./constants.js";
 import * as sys from "./dnd5e.js";
-import { checkTransfer, isTake, playerOwners } from "./rules.js";
+import { checkGrant, checkTransfer, isTake, playerOwners } from "./rules.js";
 import { APPROVAL, CHAT, getSetting } from "./settings.js";
 
 const { renderTemplate } = foundry.applications.handlebars;
@@ -261,6 +261,63 @@ async function moveCurrency({ source, target, amounts }) {
 }
 
 /* -------------------------------------------- */
+/*  Handing out sidebar / compendium items      */
+/* -------------------------------------------- */
+
+/**
+ * Give a copy of an item from the sidebar or a compendium to an actor. GM only; runs on the GM's client.
+ * @param {object} request
+ * @param {string} request.itemUuid    The item in the sidebar or a compendium.
+ * @param {string} request.targetUuid  The actor that receives the copy.
+ * @param {number} request.quantity
+ * @returns {Promise<object>}  The result (`status`: "done" or "error").
+ */
+export async function requestGrant({ itemUuid, targetUuid, quantity }) {
+  const item = await fromUuid(itemUuid);
+  const target = await fromUuid(targetUuid);
+  const resolved = {
+    item: item instanceof Item ? item : null,
+    target: target instanceof Actor ? target : null,
+    quantity: Number(quantity)
+  };
+  const check = checkGrant({ ...resolved, user: game.user });
+  if ( !check.ok ) return report({ status: "error", reason: check.reason });
+
+  const result = await enqueue(async () => {
+    try {
+      const [first, ...contents] = await sys.buildItemData(resolved.item, resolved.quantity);
+      if ( !first ) throw new Error(`Could not prepare ${itemUuid}`);
+      let received;
+      const stack = contents.length ? null : sys.findStack(resolved.target, first);
+      if ( stack ) {
+        await stack.update(sys.quantityUpdate(stack, sys.getQuantity(stack) + resolved.quantity),
+          { ...OPERATION_OPTIONS });
+        received = stack;
+      } else {
+        [received] = await Item.implementation.createDocuments([first, ...contents], {
+          ...OPERATION_OPTIONS, parent: resolved.target, keepId: true
+        });
+      }
+      const note = {
+        kind: "grant", take: false, sourceUuid: null, targetUuid: resolved.target.uuid, itemUuid: received.uuid,
+        quantity: resolved.quantity, amounts: null, remind: false
+      };
+      const summary = describe({ ...note, source: null, target: resolved.target, item: received });
+      await announce(note);
+      Hooks.callAll(`${MODULE_ID}.transferred`, {
+        kind: "grant", source: null, target: resolved.target, item: received, quantity: resolved.quantity,
+        amounts: null, user: game.user
+      });
+      return { status: "done", summary: summary.text };
+    } catch(err) {
+      logError(err);
+      return { status: "error", reason: "Failed" };
+    }
+  });
+  return report(result);
+}
+
+/* -------------------------------------------- */
 /*  Approval                                    */
 /* -------------------------------------------- */
 
@@ -373,15 +430,16 @@ function itemLabel(name, quantity) {
  * @returns {{text: string, html: string}}
  */
 function describe({ kind, take, source, target, item, quantity, amounts }) {
-  const key = `Chat.${take ? "Took" : "Gave"}`;
-  const plainWhat = kind === "item" ? itemLabel(item.name, quantity) : sys.formatCurrency(amounts);
-  const htmlWhat = kind === "item"
+  const key = `Chat.${kind === "grant" ? "Received" : (take ? "Took" : "Gave")}`;
+  const isItem = kind !== "currency";
+  const plainWhat = isItem ? itemLabel(item.name, quantity) : sys.formatCurrency(amounts);
+  const htmlWhat = isItem
     ? itemLabel(`@UUID[${item.uuid}]{${escapeHTML(item.name)}}`, quantity)
     : `<strong>${escapeHTML(plainWhat)}</strong>`;
   return {
-    text: tf(key, { source: source.name, target: target.name, what: plainWhat }),
+    text: tf(key, { source: source?.name, target: target.name, what: plainWhat }),
     html: tf(key, {
-      source: `<strong>${escapeHTML(source.name)}</strong>`,
+      source: `<strong>${escapeHTML(source?.name ?? "")}</strong>`,
       target: `<strong>${escapeHTML(target.name)}</strong>`,
       what: htmlWhat
     })
@@ -442,13 +500,15 @@ function speakerFor(actor) {
 async function createMessage(note, user) {
   const mode = getSetting("chatMessages");
   if ( mode === CHAT.off ) return;
-  const source = await fromUuid(note.sourceUuid);
+  const grant = note.kind === "grant";
+  const source = grant ? null : await fromUuid(note.sourceUuid);
   const target = await fromUuid(note.targetUuid);
   const item = note.itemUuid ? await fromUuid(note.itemUuid) : null;
-  if ( !(source instanceof Actor) || !(target instanceof Actor) ) return;
-  if ( (note.kind === "item") && (item?.parent !== target) ) return;
-  // Only someone involved in the transfer can have it announced
-  if ( !user.isGM && !source.testUserPermission(user, "OWNER") && !target.testUserPermission(user, "OWNER") ) return;
+  if ( !(target instanceof Actor) || (!grant && !(source instanceof Actor)) ) return;
+  if ( (note.kind !== "currency") && (item?.parent !== target) ) return;
+  // Only the GM hands out items; only someone involved in a transfer can have it announced
+  if ( grant ? !user.isGM
+    : (!user.isGM && !source.testUserPermission(user, "OWNER") && !target.testUserPermission(user, "OWNER")) ) return;
 
   const quantity = Math.max(1, Math.round(Number(note.quantity)) || 1);
   const amounts = {};
@@ -458,7 +518,7 @@ async function createMessage(note, user) {
   }
   const take = !!note.take;
   const summary = describe({ kind: note.kind, take, source, target, item, quantity, amounts });
-  const actor = take ? target : source;
+  const actor = (take || grant) ? target : source;
   const content = await renderTemplate(`${TEMPLATE_PATH}/chat-card.hbs`, {
     img: item?.img ?? null,
     icon: item ? null : "fa-solid fa-coins",
@@ -470,11 +530,14 @@ async function createMessage(note, user) {
     speaker: speakerFor(actor),
     content,
     flags: {
-      [MODULE_ID]: { transfer: { kind: note.kind, source: source.uuid, target: target.uuid, item: item?.uuid ?? null } }
+      [MODULE_ID]: {
+        transfer: { kind: note.kind, source: source?.uuid ?? null, target: target.uuid, item: item?.uuid ?? null }
+      }
     }
   };
   if ( mode === CHAT.whisper ) {
-    const ids = new Set([user.id, ...playerOwners(source).map(u => u.id), ...playerOwners(target).map(u => u.id)]);
+    const ids = new Set([user.id, ...playerOwners(target).map(u => u.id)]);
+    if ( source ) playerOwners(source).forEach(u => ids.add(u.id));
     game.users.filter(u => u.isGM).forEach(u => ids.add(u.id));
     data.whisper = Array.from(ids);
   }

@@ -4,8 +4,8 @@
 
 import { TEMPLATE_PATH, t, tf } from "./constants.js";
 import * as sys from "./dnd5e.js";
-import { getTargets, isTake, sameActor } from "./rules.js";
-import { requestTransfer } from "./transfer.js";
+import { getGrantTargets, getTargets, isTake, sameActor } from "./rules.js";
+import { requestGrant, requestTransfer } from "./transfer.js";
 
 const { DialogV2 } = foundry.applications.api;
 const { renderTemplate } = foundry.applications.handlebars;
@@ -52,13 +52,15 @@ function readForm(button) {
 }
 
 /**
- * Open the dialog to give an item (or take it from a group).
+ * Open the dialog to give an item (or take it from a group). Items in the sidebar or a compendium open the GM's
+ * dialog to hand out a copy instead.
  * @param {Item} item
  * @param {object} [options]
  * @param {Actor} [options.target]  Preselected recipient.
  * @returns {Promise<object|null>}  The transfer result, or null if cancelled.
  */
 export async function openItemDialog(item, { target=null }={}) {
+  if ( item && !item.parent ) return openGrantDialog(item, { target });
   const source = item?.actor;
   if ( !source || !sys.isGiveable(item) ) return null;
   const targets = getTargets(source);
@@ -108,6 +110,54 @@ export async function openItemDialog(item, { target=null }={}) {
     itemId: item.id,
     quantity: fixedQuantity ? max : Math.round(Number(result.quantity))
   });
+}
+
+/**
+ * Open the GM's dialog to hand out a copy of a sidebar or compendium item.
+ * @param {Item} item
+ * @param {object} [options]
+ * @param {Actor} [options.target]  Preselected recipient.
+ * @returns {Promise<object|null>}  The result, or null if cancelled.
+ */
+async function openGrantDialog(item, { target=null }={}) {
+  if ( !sys.isGrantable(item) ) return null;
+  const targets = getGrantTargets();
+  if ( !targets.length ) {
+    ui.notifications.warn(t("Error.NoTargets"));
+    return null;
+  }
+
+  const contents = await sys.countContents(item);
+  const content = await renderTemplate(`${TEMPLATE_PATH}/give-item.hbs`, {
+    item: { name: item.name, img: item.img, stack: null },
+    contents: contents ? tf("Dialog.Contents", { count: contents }) : null,
+    targets: prepareTargets(targets, target),
+    targetLabel: t("Dialog.GiveTo"),
+    quantity: contents ? null : { max: null, value: Math.max(1, sys.getQuantity(item)) }
+  });
+
+  const result = await DialogV2.wait({
+    window: { title: tf("Dialog.GiveItemTitle", { name: item.name }), icon: "fa-solid fa-hand-holding-hand" },
+    classes: ["ngt-dialog"],
+    position: { width: 420 },
+    content,
+    buttons: [
+      {
+        action: "confirm", label: t("Dialog.Give"), icon: "fa-solid fa-hand-holding-hand", default: true,
+        callback: (event, button) => readForm(button)
+      },
+      { action: "cancel", label: t("Dialog.Cancel"), icon: "fa-solid fa-xmark" }
+    ],
+    rejectClose: false
+  });
+  if ( !result || (result === "cancel") ) return null;
+  if ( !result.target ) {
+    ui.notifications.warn(t("Error.PickTarget"));
+    return null;
+  }
+
+  const quantity = contents ? Math.max(1, sys.getQuantity(item)) : Math.round(Number(result.quantity));
+  return requestGrant({ itemUuid: item.uuid, targetUuid: result.target, quantity });
 }
 
 /**

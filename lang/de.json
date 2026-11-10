@@ -41,6 +41,7 @@
     "Chat": {
       "Gave": "{source} gab {what} an {target}.",
       "Took": "{target} nahm {what} von {source}.",
+      "Received": "{target} erhielt {what}.",
       "CombatReminder": "Im Kampf: Das verbraucht die Objektinteraktion von {name}."
     },
     "Notify": {
@@ -60,6 +61,7 @@
       "CurrencyDisabled": "Der SL hat Geldübergaben ausgeschaltet.",
       "NoCurrency": "Einer der Charaktere kann kein Geld haben.",
       "InvalidAmount": "Gib einen Betrag ein.",
+      "InvalidQuantity": "Gib eine Anzahl von mindestens 1 ein.",
       "NotEnoughCurrency": "So viel Geld ist nicht vorhanden.",
       "NoMoney": "{name} hat kein Geld.",
       "NoTokens": "Beide Charaktere brauchen ein Token in der aktuellen Szene.",

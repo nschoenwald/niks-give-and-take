@@ -70,18 +70,68 @@ export function getTargets(source, user=game.user) {
   }
 
   else if ( can(source, user, "OWNER") ) {
-    const party = sys.getPrimaryParty();
-    if ( party ) {
-      targets.add(party);
-      sys.getGroupMembers(party).forEach(m => targets.add(m));
-    }
-    if ( !party || (getSetting("giveTargets") === TARGETS.players) ) {
-      game.actors.filter(a => sys.isCharacter(a) && a.hasPlayerOwner).forEach(a => targets.add(a));
-    }
+    partyPool(getSetting("giveTargets") === TARGETS.players).forEach(a => targets.add(a));
   }
 
-  return Array.from(targets).filter(a => sys.canHoldItems(a) && !sameActor(a, source))
-    .sort((a, b) => Number(sys.isGroup(b)) - Number(sys.isGroup(a)) || a.name.localeCompare(b.name, game.i18n.lang));
+  return sortTargets(Array.from(targets).filter(a => sys.canHoldItems(a) && !sameActor(a, source)));
+}
+
+/**
+ * The primary party actor and its members, plus all characters owned by players when asked for or when there is no
+ * primary party.
+ * @param {boolean} withPlayers
+ * @returns {Set<Actor>}
+ */
+function partyPool(withPlayers) {
+  const pool = new Set();
+  const party = sys.getPrimaryParty();
+  if ( party ) {
+    pool.add(party);
+    sys.getGroupMembers(party).forEach(m => pool.add(m));
+  }
+  if ( !party || withPlayers ) {
+    game.actors.filter(a => sys.isCharacter(a) && a.hasPlayerOwner).forEach(a => pool.add(a));
+  }
+  return pool;
+}
+
+/**
+ * Groups first, then by name.
+ * @param {Actor[]} actors
+ * @returns {Actor[]}
+ */
+function sortTargets(actors) {
+  return actors.sort((a, b) => Number(sys.isGroup(b)) - Number(sys.isGroup(a))
+    || a.name.localeCompare(b.name, game.i18n.lang));
+}
+
+/**
+ * Who the GM can hand out a copy of a sidebar or compendium item to: the primary party, its members and all player
+ * characters. Players can't, since that would create items.
+ * @param {User} [user]
+ * @returns {Actor[]}
+ */
+export function getGrantTargets(user=game.user) {
+  if ( !user.isGM ) return [];
+  return sortTargets(Array.from(partyPool(true)).filter(a => sys.canHoldItems(a)));
+}
+
+/**
+ * Check handing out a copy of a sidebar or compendium item.
+ * @param {object} config
+ * @param {Item} config.item
+ * @param {Actor} config.target
+ * @param {number} config.quantity
+ * @param {User} config.user
+ * @returns {{ok: true}|{ok: false, reason: string}}
+ */
+export function checkGrant({ item, target, quantity, user }) {
+  if ( !user.isGM ) return { ok: false, reason: "NotAllowed" };
+  if ( !item || !target ) return { ok: false, reason: "Missing" };
+  if ( !sys.isGrantable(item) ) return { ok: false, reason: "NotGiveable" };
+  if ( !getGrantTargets(user).some(a => sameActor(a, target)) ) return { ok: false, reason: "NotAllowed" };
+  if ( !Number.isInteger(quantity) || (quantity < 1) ) return { ok: false, reason: "InvalidQuantity" };
+  return { ok: true };
 }
 
 /**

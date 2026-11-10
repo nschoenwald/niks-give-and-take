@@ -69,6 +69,23 @@ export function isGiveable(item) {
 }
 
 /**
+ * Whether items of a type are physical, from the type's data model (works for compendium index entries too).
+ * @param {string} type
+ * @returns {boolean}
+ */
+export function isPhysicalType(type) {
+  return !!CONFIG.Item.dataModels[type]?.schema?.fields?.quantity;
+}
+
+/**
+ * @param {Item} item  An item in the sidebar or a compendium.
+ * @returns {boolean}  Whether the GM can hand out a copy of it.
+ */
+export function isGrantable(item) {
+  return !!item && !item.parent && isPhysicalType(item.type);
+}
+
+/**
  * @param {Item} item
  * @returns {number}
  */
@@ -108,13 +125,16 @@ export async function getDeleteIds(item) {
 
 /**
  * Build the creation data for an item (and its contents, for containers) on another actor.
- * @param {Item} item       The item on the source actor.
+ * @param {Item} item       The item on the source actor, or in the sidebar or a compendium.
  * @param {number} quantity The quantity that changes hands.
  * @returns {Promise<object[]>}  Data for `Item.createDocuments` with `keepId: true`.
  */
 export async function buildItemData(item, quantity) {
+  // Sidebar and compendium items go through core's import cleanup, which records the compendium source (stacking)
+  const transformAll = item.parent ? doc => doc.toObject()
+    : doc => game.items.fromCompendium(doc, { clearFolder: true, keepId: true });
   return dnd5e.documents.Item5e.createWithContents([item], {
-    transformAll: doc => doc.toObject(),
+    transformAll,
     transformFirst: data => {
       for ( const field of RESET_FIELDS ) foundry.utils.deleteProperty(data.system ?? {}, field);
       if ( data.system && ("quantity" in data.system) ) data.system.quantity = quantity;

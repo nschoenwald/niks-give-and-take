@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.2.0] - 2026-11-10
+
+### Added
+- **Hand Out Items**: GMs can right-click a physical item in the Items sidebar or in a compendium and choose "Give to…" to give a copy to the party, a party member or any player character, with a quantity of their choice.
+
 ## [14.1.0] - 2026-11-10
 
 ### Added

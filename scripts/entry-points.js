@@ -26,6 +26,27 @@ function onItemContextOptions(item, options) {
 }
 
 /**
+ * "Give to…" in the context menu of the Items sidebar and of item compendiums (GM only): hands out a copy.
+ * @param {DocumentDirectory} app  The Items sidebar or a compendium window.
+ * @param {object[]} options
+ */
+function onDirectoryContextOptions(app, options) {
+  if ( !game.user.isGM ) return;
+  const isPack = app.collection instanceof foundry.documents.collections.CompendiumCollection;
+  const entry = li => (isPack ? app.collection.index.get(li.dataset.entryId) : game.items.get(li.dataset.entryId));
+  options.push({
+    label: t("Menu.Give"),
+    icon: "fa-solid fa-hand-holding-hand fa-fw",
+    group: "system",
+    visible: li => sys.isPhysicalType(entry(li)?.type),
+    onClick: async (event, li) => {
+      const item = isPack ? await app.collection.getDocument(li.dataset.entryId) : game.items.get(li.dataset.entryId);
+      if ( item ) openItemDialog(item);
+    }
+  });
+}
+
+/**
  * Dropping an owned item onto another actor's token opens the dialog with that actor selected. Must answer
  * synchronously, so it only handles drops it can decide on right away.
  * @param {Canvas} canvas
@@ -71,6 +92,7 @@ function onActorSheetHeaderControls(app, controls) {
  */
 export function registerEntryPoints() {
   Hooks.on("dnd5e.getItemContextOptions", onItemContextOptions);
+  Hooks.on("getItemContextOptions", onDirectoryContextOptions);
   Hooks.on("dropCanvasData", onDropCanvasData);
   Hooks.on("getHeaderControlsActorSheetV2", onActorSheetHeaderControls);
 }

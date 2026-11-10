@@ -41,6 +41,7 @@
     "Chat": {
       "Gave": "{source} gave {what} to {target}.",
       "Took": "{target} took {what} from {source}.",
+      "Received": "{target} received {what}.",
       "CombatReminder": "In combat: this uses {name}'s object interaction."
     },
     "Notify": {
@@ -60,6 +61,7 @@
       "CurrencyDisabled": "The GM has turned off money transfers.",
       "NoCurrency": "One of the characters can't hold money.",
       "InvalidAmount": "Enter an amount to transfer.",
+      "InvalidQuantity": "Enter a quantity of at least 1.",
       "NotEnoughCurrency": "There isn't that much money to transfer.",
       "NoMoney": "{name} has no money.",
       "NoTokens": "Both characters need a token on the current scene.",
