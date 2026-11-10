@@ -1,0 +1,220 @@
+/* Nik's Give & Take. Prefix: ngt-.
+ * Dialogs follow the Core Apps theme through Foundry's own variables; the chat card follows the chat card's
+ * text colour (currentColor), so it works with D&D 5e's light and dark chat. */
+
+.ngt-dialog {
+  --ngt-gap: 0.5rem;
+  --ngt-portrait: 2.25rem;
+  --ngt-border: var(--color-border, rgb(127 127 127 / 0.5));
+  --ngt-highlight: var(--color-border-highlight, #ff6400);
+  --ngt-muted: var(--color-text-secondary, currentColor);
+}
+
+.ngt-dialog .ngt-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ngt-gap);
+}
+
+/* Item / actor at the top */
+.ngt-dialog .ngt-subject {
+  display: flex;
+  align-items: center;
+  gap: var(--ngt-gap);
+  margin: 0;
+}
+
+.ngt-dialog .ngt-subject > img {
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  object-fit: cover;
+  border: 1px solid var(--ngt-border);
+  border-radius: 4px;
+}
+
+.ngt-dialog .ngt-subject-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ngt-dialog .ngt-name {
+  font-weight: bold;
+  font-size: var(--font-size-16, 1rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ngt-dialog .ngt-meta {
+  color: var(--ngt-muted);
+  font-size: var(--font-size-12, 0.75rem);
+}
+
+.ngt-dialog .ngt-offer-text {
+  margin: 0;
+}
+
+/* Recipients */
+.ngt-dialog .ngt-target-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.25rem;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.ngt-dialog .ngt-target {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  padding: 0.25rem 0.375rem;
+  border: 1px solid var(--ngt-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.ngt-dialog .ngt-target:hover {
+  border-color: var(--ngt-highlight);
+}
+
+.ngt-dialog .ngt-target:has(input:checked) {
+  border-color: var(--ngt-highlight);
+  box-shadow: 0 0 0 1px var(--ngt-highlight) inset;
+  background: color-mix(in srgb, var(--ngt-highlight) 12%, transparent);
+}
+
+.ngt-dialog .ngt-target:has(input:focus-visible) {
+  outline: 2px solid var(--ngt-highlight);
+  outline-offset: 1px;
+}
+
+/* The radio stays in the form and focusable, the card shows the state */
+.ngt-dialog .ngt-target input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.ngt-dialog .ngt-target img {
+  flex: 0 0 auto;
+  width: var(--ngt-portrait);
+  height: var(--ngt-portrait);
+  object-fit: cover;
+  object-position: top;
+  border: none;
+  border-radius: 50%;
+}
+
+.ngt-dialog .ngt-target-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ngt-dialog .ngt-target.ngt-group .ngt-target-name {
+  font-weight: bold;
+}
+
+.ngt-dialog .ngt-target .fa-users {
+  color: var(--ngt-muted);
+}
+
+/* Quantity */
+.ngt-dialog .ngt-quantity .form-fields {
+  gap: var(--ngt-gap);
+}
+
+.ngt-dialog .ngt-quantity input[type="range"] {
+  flex: 1;
+}
+
+.ngt-dialog .ngt-quantity input[type="number"] {
+  flex: 0 0 4.5rem;
+  text-align: center;
+}
+
+/* Currency */
+.ngt-dialog .ngt-currency {
+  display: grid;
+  grid-template-columns: auto 1fr 5rem auto;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+
+.ngt-dialog .ngt-denomination {
+  display: contents;
+}
+
+.ngt-dialog .ngt-denomination img {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  grid-column: 1;
+}
+
+.ngt-dialog .ngt-denomination label {
+  grid-column: 2;
+}
+
+.ngt-dialog .ngt-denomination input {
+  grid-column: 3;
+  text-align: right;
+}
+
+.ngt-dialog .ngt-available {
+  grid-column: 4;
+  color: var(--ngt-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ngt-dialog .ngt-denomination.ngt-empty label,
+.ngt-dialog .ngt-denomination.ngt-empty img {
+  opacity: 0.5;
+}
+
+/* Chat card */
+.ngt-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ngt-card .ngt-card-img {
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  object-fit: cover;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 4px;
+}
+
+.ngt-card .ngt-card-icon {
+  flex: 0 0 2.25rem;
+  font-size: 1.5rem;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.ngt-card .ngt-card-body {
+  min-width: 0;
+}
+
+.ngt-card p {
+  margin: 0;
+}
+
+.ngt-card .ngt-card-reminder {
+  margin-top: 0.125rem;
+  font-size: var(--font-size-12, 0.75rem);
+  opacity: 0.8;
+}

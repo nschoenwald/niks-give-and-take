@@ -1,0 +1,128 @@
+{
+  "NGT": {
+    "GM": "der SL",
+    "Quantity": "{quantity}× {name}",
+    "Menu": {
+      "Give": "Geben an…",
+      "Take": "Nehmen…",
+      "GiveCurrency": "Geld geben",
+      "TakeCurrency": "Geld nehmen"
+    },
+    "Dialog": {
+      "Give": "Geben",
+      "Take": "Nehmen",
+      "Cancel": "Abbrechen",
+      "GiveTo": "Geben an",
+      "TakeFor": "Nehmen für",
+      "GiveItemTitle": "{name} geben",
+      "TakeItemTitle": "{name} nehmen",
+      "GiveCurrencyTitle": "Geld geben: {name}",
+      "TakeCurrencyTitle": "Geld nehmen: {name}",
+      "Quantity": "Anzahl",
+      "Owned": "{quantity} im Stapel",
+      "Contents": "Behälter mit {count} Gegenständen, die mitgehen",
+      "Amount": "Betrag",
+      "Available": "Vorhanden"
+    },
+    "Offer": {
+      "Title": {
+        "Recipient": "Gegenstand angeboten",
+        "GM": "Übergabe bestätigen"
+      },
+      "Recipient": "{source} möchte dir {what} geben.",
+      "GM": {
+        "Give": "{user} möchte, dass {source} {what} an {target} gibt.",
+        "Take": "{user} möchte, dass {target} {what} von {source} nimmt."
+      },
+      "Hint": "Schließt sich nach einer Minute ohne Antwort von selbst.",
+      "Accept": "Annehmen",
+      "Decline": "Ablehnen"
+    },
+    "Chat": {
+      "Gave": "{source} gab {what} an {target}.",
+      "Took": "{target} nahm {what} von {source}.",
+      "CombatReminder": "Im Kampf: Das verbraucht die Objektinteraktion von {name}."
+    },
+    "Notify": {
+      "Waiting": {
+        "Recipient": "Warte, bis {name} annimmt…",
+        "GM": "Warte auf die Bestätigung von {name}…"
+      },
+      "Declined": "{name} hat abgelehnt.",
+      "Expired": "Keine Antwort von {name}. Es wurde nichts übergeben."
+    },
+    "Error": {
+      "Missing": "Der Gegenstand oder einer der Charaktere existiert nicht mehr.",
+      "SameActor": "Du kannst nichts an denselben Charakter geben.",
+      "NotAllowed": "An diesen Charakter kannst du nichts übergeben.",
+      "NotGiveable": "Dieser Gegenstand kann nicht übergeben werden.",
+      "QuantityChanged": "Die Anzahl hat sich inzwischen geändert. Bitte versuche es noch einmal.",
+      "CurrencyDisabled": "Der SL hat Geldübergaben ausgeschaltet.",
+      "NoCurrency": "Einer der Charaktere kann kein Geld haben.",
+      "InvalidAmount": "Gib einen Betrag ein.",
+      "NotEnoughCurrency": "So viel Geld ist nicht vorhanden.",
+      "NoMoney": "{name} hat kein Geld.",
+      "NoTokens": "Beide Charaktere brauchen ein Token in der aktuellen Szene.",
+      "TooFar": "Die Charaktere sind zu weit voneinander entfernt (höchstens {distance} {units}).",
+      "InCombat": "Im Kampf können Gegenstände und Geld nicht den Besitzer wechseln.",
+      "NoGM": "Dafür muss ein SL online sein.",
+      "NoQueryPermission": "Deine Benutzerrolle darf keine Anfragen an den SL senden. Der SL kann die Berechtigung „Benutzer abfragen“ ändern.",
+      "NoTargets": "Es gibt niemanden, an den du übergeben kannst.",
+      "PickTarget": "Wähle aus, wer es bekommt.",
+      "Failed": "Die Übergabe ist fehlgeschlagen. Details stehen in der Konsole (F12)."
+    },
+    "Settings": {
+      "ApprovalMode": {
+        "Name": "Bestätigung",
+        "Hint": "Wer zustimmen muss, wenn ein Spieler einem anderen Charakter etwas gibt. Geben an die Gruppe und Nehmen von ihr braucht nie die Antwort des Empfängers.",
+        "Choices": {
+          "instant": "Niemand: Übergaben passieren sofort",
+          "recipient": "Der Spieler des Empfängers (der SL antwortet, wenn er offline ist)",
+          "gm": "Der SL, bei jedem Geben und Nehmen"
+        }
+      },
+      "GiveTargets": {
+        "Name": "Spieler können geben an",
+        "Hint": "Der Akteur der Hauptgruppe ist immer ein Empfänger. Ohne Hauptgruppe können Spieler an alle Spielercharaktere geben.",
+        "Choices": {
+          "party": "Mitglieder der Hauptgruppe",
+          "players": "Alle Spielercharaktere und Gruppenmitglieder"
+        }
+      },
+      "AllowTake": {
+        "Name": "Von der Gruppe nehmen",
+        "Hint": "Spieler können Gegenstände und Geld aus einem Gruppen-Akteur, den sie sehen können, in einen eigenen Charakter nehmen."
+      },
+      "AllowCurrency": {
+        "Name": "Geldübergaben",
+        "Hint": "Spieler können anderen Geld geben und Geld von der Gruppe nehmen."
+      },
+      "MaxDistance": {
+        "Name": "Maximale Entfernung",
+        "Hint": "Wie nah die Tokens zweier Charaktere in der aktuellen Szene sein müssen, um etwas zu übergeben, in den Rastereinheiten der Szene. 0 schaltet das aus. Gilt nicht für den Gruppen-Akteur und nicht für den SL."
+      },
+      "CombatRule": {
+        "Name": "Im Kampf",
+        "Hint": "Gilt, wenn einer der beiden Charaktere in einem begonnenen Kampf ist. Gilt nicht für den Gruppen-Akteur und nicht für den SL.",
+        "Choices": {
+          "allow": "Erlauben",
+          "remind": "Erlauben und daran erinnern, dass es die Objektinteraktion verbraucht",
+          "block": "Verhindern"
+        }
+      },
+      "ChatMessages": {
+        "Name": "Chatnachrichten",
+        "Hint": "Für jede Übergabe eine Chatnachricht posten.",
+        "Choices": {
+          "public": "Alle sehen sie",
+          "whisper": "Nur die beteiligten Spieler und der SL",
+          "off": "Aus"
+        }
+      },
+      "TokenDrop": {
+        "Name": "Geben durch Ablegen auf ein Token",
+        "Hint": "Wenn du einen deiner Gegenstände auf das Token eines anderen Charakters ziehst, öffnet sich der Dialog zum Geben."
+      }
+    }
+  }
+}

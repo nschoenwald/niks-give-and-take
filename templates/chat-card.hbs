@@ -1,0 +1,7 @@
+<div class="ngt-card">
+  {{#if img}}<img class="ngt-card-img" src="{{img}}" alt="">{{else}}<i class="ngt-card-icon {{icon}}" inert></i>{{/if}}
+  <div class="ngt-card-body">
+    <p class="ngt-card-text">{{{text}}}</p>
+    {{#if reminder}}<p class="ngt-card-reminder"><i class="fa-solid fa-person-running" inert></i> {{reminder}}</p>{{/if}}
+  </div>
+</div>

@@ -1,0 +1,22 @@
+<div class="ngt-form">
+  <header class="ngt-subject">
+    <img src="{{item.img}}" alt="">
+    <div class="ngt-subject-text">
+      <span class="ngt-name">{{item.name}}</span>
+      {{#if item.stack}}<span class="ngt-meta">{{item.stack}}</span>{{/if}}
+      {{#if contents}}<span class="ngt-meta">{{contents}}</span>{{/if}}
+    </div>
+  </header>
+
+  {{> "modules/niks-give-and-take/templates/targets.hbs"}}
+
+  {{#if quantity}}
+  <div class="form-group ngt-quantity">
+    <label>{{localize "NGT.Dialog.Quantity"}}</label>
+    <div class="form-fields">
+      <input type="range" data-quantity min="1" max="{{quantity.max}}" step="1" value="{{quantity.value}}">
+      <input type="number" name="quantity" data-quantity min="1" max="{{quantity.max}}" step="1" value="{{quantity.value}}">
+    </div>
+  </div>
+  {{/if}}
+</div>

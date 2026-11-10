@@ -1,0 +1,128 @@
+{
+  "NGT": {
+    "GM": "the GM",
+    "Quantity": "{quantity}× {name}",
+    "Menu": {
+      "Give": "Give to…",
+      "Take": "Take…",
+      "GiveCurrency": "Give Money",
+      "TakeCurrency": "Take Money"
+    },
+    "Dialog": {
+      "Give": "Give",
+      "Take": "Take",
+      "Cancel": "Cancel",
+      "GiveTo": "Give to",
+      "TakeFor": "Take for",
+      "GiveItemTitle": "Give {name}",
+      "TakeItemTitle": "Take {name}",
+      "GiveCurrencyTitle": "Give Money: {name}",
+      "TakeCurrencyTitle": "Take Money: {name}",
+      "Quantity": "Quantity",
+      "Owned": "{quantity} in stack",
+      "Contents": "Container with {count} items inside, which go along",
+      "Amount": "Amount",
+      "Available": "Available"
+    },
+    "Offer": {
+      "Title": {
+        "Recipient": "Item Offered",
+        "GM": "Approve Transfer"
+      },
+      "Recipient": "{source} wants to give you {what}.",
+      "GM": {
+        "Give": "{user} wants {source} to give {what} to {target}.",
+        "Take": "{user} wants {target} to take {what} from {source}."
+      },
+      "Hint": "Closes on its own after a minute without an answer.",
+      "Accept": "Accept",
+      "Decline": "Decline"
+    },
+    "Chat": {
+      "Gave": "{source} gave {what} to {target}.",
+      "Took": "{target} took {what} from {source}.",
+      "CombatReminder": "In combat: this uses {name}'s object interaction."
+    },
+    "Notify": {
+      "Waiting": {
+        "Recipient": "Waiting for {name} to accept…",
+        "GM": "Waiting for {name} to approve…"
+      },
+      "Declined": "{name} declined.",
+      "Expired": "No answer from {name}. Nothing was transferred."
+    },
+    "Error": {
+      "Missing": "The item or one of the characters no longer exists.",
+      "SameActor": "You can't give something to the same character.",
+      "NotAllowed": "You can't transfer to this character.",
+      "NotGiveable": "This item can't be handed over.",
+      "QuantityChanged": "The quantity changed in the meantime. Please try again.",
+      "CurrencyDisabled": "The GM has turned off money transfers.",
+      "NoCurrency": "One of the characters can't hold money.",
+      "InvalidAmount": "Enter an amount to transfer.",
+      "NotEnoughCurrency": "There isn't that much money to transfer.",
+      "NoMoney": "{name} has no money.",
+      "NoTokens": "Both characters need a token on the current scene.",
+      "TooFar": "The characters are too far apart (at most {distance} {units}).",
+      "InCombat": "Items and money can't change hands during combat.",
+      "NoGM": "This needs a GM to be online.",
+      "NoQueryPermission": "Your user role isn't allowed to send requests to the GM. The GM can change the \"Query Users\" permission.",
+      "NoTargets": "There is nobody you can transfer to.",
+      "PickTarget": "Choose who gets it.",
+      "Failed": "The transfer failed. See the console (F12) for details."
+    },
+    "Settings": {
+      "ApprovalMode": {
+        "Name": "Approval",
+        "Hint": "Who has to agree when a player gives something to another character. Giving to the party and taking from it never needs the recipient's answer.",
+        "Choices": {
+          "instant": "Nobody: transfers happen right away",
+          "recipient": "The recipient's player (the GM answers if they're offline)",
+          "gm": "The GM, for every give and take"
+        }
+      },
+      "GiveTargets": {
+        "Name": "Players Can Give To",
+        "Hint": "The primary party actor is always a recipient. Without a primary party, players can give to all player characters.",
+        "Choices": {
+          "party": "Members of the primary party",
+          "players": "All player characters and party members"
+        }
+      },
+      "AllowTake": {
+        "Name": "Taking from the Party",
+        "Hint": "Players can take items and money from a group actor they can see into a character they own."
+      },
+      "AllowCurrency": {
+        "Name": "Money Transfers",
+        "Hint": "Players can give money to others and take money from the party."
+      },
+      "MaxDistance": {
+        "Name": "Maximum Distance",
+        "Hint": "How close two characters' tokens must be on the current scene to hand something over, in the scene's grid units. 0 turns this off. Doesn't apply to the party actor or to the GM."
+      },
+      "CombatRule": {
+        "Name": "During Combat",
+        "Hint": "Applies when one of the two characters is in a started combat. Doesn't apply to the party actor or to the GM.",
+        "Choices": {
+          "allow": "Allow",
+          "remind": "Allow, and remind that it uses the object interaction",
+          "block": "Block"
+        }
+      },
+      "ChatMessages": {
+        "Name": "Chat Messages",
+        "Hint": "Post a chat message for each transfer.",
+        "Choices": {
+          "public": "Everyone sees them",
+          "whisper": "Only the players involved and the GM",
+          "off": "Off"
+        }
+      },
+      "TokenDrop": {
+        "Name": "Give by Dropping onto a Token",
+        "Hint": "Dropping one of your items onto another character's token opens the give dialog."
+      }
+    }
+  }
+}

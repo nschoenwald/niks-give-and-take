@@ -1,0 +1,23 @@
+<div class="ngt-form">
+  <header class="ngt-subject">
+    <img src="{{source.img}}" alt="">
+    <div class="ngt-subject-text">
+      <span class="ngt-name">{{source.name}}</span>
+    </div>
+  </header>
+
+  <fieldset class="ngt-currency">
+    <legend>{{localize "NGT.Dialog.Amount"}}</legend>
+    {{#each denominations}}
+    <div class="ngt-denomination{{#if disabled}} ngt-empty{{/if}}">
+      {{#if icon}}<img src="{{icon}}" alt="">{{/if}}
+      <label for="ngt-amount-{{key}}">{{label}}</label>
+      <input type="number" id="ngt-amount-{{key}}" name="amount.{{key}}" min="0" max="{{max}}" step="1"
+             placeholder="0" {{disabled disabled}}>
+      <span class="ngt-available" data-tooltip="{{../available}}">/ {{max}}</span>
+    </div>
+    {{/each}}
+  </fieldset>
+
+  {{> "modules/niks-give-and-take/templates/targets.hbs"}}
+</div>
