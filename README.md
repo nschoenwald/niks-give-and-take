@@ -35,7 +35,7 @@ There are two ways to give an item:
 - **Context menu**: right-click an item in the inventory and choose **Give to…**.
 - **Drop onto a token**: drag an item from your sheet onto another character's token on the canvas. The give dialog opens with that character already selected. Players can turn this off for themselves.
 
-The dialog lists everyone you can give to: the primary party actor and the party's members (or all player characters, if the GM sets it that way). For stacks, a slider picks how many change hands; the rest stays with you.
+The dialog lists everyone you can give to: the primary party actor and the party's members (or all player characters, if the GM sets it that way). Any other group one of your characters belongs to is listed too. The GM sees every group actor in the world. For stacks, a slider picks how many change hands; the rest stays with you.
 
 What happens to the item:
 
@@ -52,7 +52,7 @@ With **[Nik's Tiny Change Logs](https://github.com/nschoenwald/niks-tiny-changel
 
 ## 🎁 Handing Out Items (GM)
 
-The GM can hand out loot straight from the **Items sidebar** or an **item compendium**: right-click a physical item and choose **Give to…**. Pick the recipient (the party, its members or any player character) and how many. The recipient gets a copy; the item in the sidebar or compendium stays where it is. The copy stacks onto a matching item the recipient already has, containers come with their contents, and the chat message reads e.g. *"Bren received 3× Potion of Healing."*
+The GM can hand out loot straight from the **Items sidebar** or an **item compendium**: right-click a physical item and choose **Give to…**. Pick the recipient (any group actor in the world, the party's members or any player character) and how many. The recipient gets a copy; the item in the sidebar or compendium stays where it is. The copy stacks onto a matching item the recipient already has, containers come with their contents, and the chat message reads e.g. *"Bren received 3× Potion of Healing."*
 
 Players don't see this option, since it creates new items.
 

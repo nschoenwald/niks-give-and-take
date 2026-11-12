@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.3.0] - 2026-11-12
+
+### Added
+- **More Groups to Give To**: Besides the primary party, players can now give items and money to any other group one of their characters belongs to. Players don't see groups none of their characters are in.
+- **Groups for the GM**: Every "Give to…" list the GM opens now includes all group actors in the world: handing out items from the Items sidebar or a compendium, giving items from any inventory (including from one group to another), dropping an item onto a group's token, and Give Money.
+
 ## [14.2.1] - 2026-11-12
 
 ### Changed

@@ -53,6 +53,8 @@ export function playerOwners(actor) {
  * - From a group the user owns: its members.
  * - From a group the user doesn't own (taking): the members the user owns, if taking is allowed and the user can see
  *   the group.
+ * - Groups: the GM gets every group actor in the world in all cases. A player giving from an actor they own (not
+ *   taking) also gets the groups that one of their characters is a member of.
  * @param {Actor} source
  * @param {User} [user]
  * @returns {Actor[]}
@@ -72,6 +74,9 @@ export function getTargets(source, user=game.user) {
   else if ( can(source, user, "OWNER") ) {
     partyPool(getSetting("giveTargets") === TARGETS.players).forEach(a => targets.add(a));
   }
+
+  if ( user.isGM ) worldGroups().forEach(a => targets.add(a));
+  else if ( can(source, user, "OWNER") ) memberGroups(user).forEach(a => targets.add(a));
 
   return sortTargets(Array.from(targets).filter(a => sys.canHoldItems(a) && !sameActor(a, source)));
 }
@@ -96,6 +101,21 @@ function partyPool(withPlayers) {
 }
 
 /**
+ * @returns {Actor[]}  All group actors in the world.
+ */
+function worldGroups() {
+  return game.actors.filter(a => sys.isGroup(a));
+}
+
+/**
+ * @param {User} user
+ * @returns {Actor[]}  The world's group actors that have a member the user owns.
+ */
+function memberGroups(user) {
+  return worldGroups().filter(g => sys.getGroupMembers(g).some(m => can(m, user, "OWNER")));
+}
+
+/**
  * Groups first, then by name.
  * @param {Actor[]} actors
  * @returns {Actor[]}
@@ -106,14 +126,16 @@ function sortTargets(actors) {
 }
 
 /**
- * Who the GM can hand out a copy of a sidebar or compendium item to: the primary party, its members and all player
- * characters. Players can't, since that would create items.
+ * Who the GM can hand out a copy of a sidebar or compendium item to: every group actor in the world, the primary
+ * party's members and all player characters. Players can't, since that would create items.
  * @param {User} [user]
  * @returns {Actor[]}
  */
 export function getGrantTargets(user=game.user) {
   if ( !user.isGM ) return [];
-  return sortTargets(Array.from(partyPool(true)).filter(a => sys.canHoldItems(a)));
+  const pool = partyPool(true);
+  worldGroups().forEach(a => pool.add(a));
+  return sortTargets(Array.from(pool).filter(a => sys.canHoldItems(a)));
 }
 
 /**
