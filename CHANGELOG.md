@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.2.1] - 2026-11-12
+
+### Changed
+- **Compatibility**: Verified with D&D 5e 6.1. Nothing changes in how the module works.
+
 ## [14.2.0] - 2026-11-10
 
 ### Added
