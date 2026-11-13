@@ -13,6 +13,9 @@ export const TARGETS = { party: "party", players: "players" };
 /** Behaviour during combat for transfers between characters. */
 export const COMBAT = { allow: "allow", remind: "remind", block: "block" };
 
+/** Where players may buy from. The GM can always buy. */
+export const BUY = { off: "off", actors: "actors", all: "all" };
+
 /** Who sees the chat message about a transfer. */
 export const CHAT = { public: "public", whisper: "whisper", off: "off" };
 
@@ -65,6 +68,25 @@ export function registerSettings() {
   game.settings.register(MODULE_ID, "allowCurrency", {
     name: "NGT.Settings.AllowCurrency.Name",
     hint: "NGT.Settings.AllowCurrency.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true
+  });
+
+  game.settings.register(MODULE_ID, "buying", {
+    name: "NGT.Settings.Buying.Name",
+    hint: "NGT.Settings.Buying.Hint",
+    scope: "world",
+    config: true,
+    type: String,
+    choices: choices("Buying", BUY),
+    default: BUY.all
+  });
+
+  game.settings.register(MODULE_ID, "allowSelling", {
+    name: "NGT.Settings.AllowSelling.Name",
+    hint: "NGT.Settings.AllowSelling.Hint",
     scope: "world",
     config: true,
     type: Boolean,

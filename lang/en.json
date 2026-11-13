@@ -6,7 +6,9 @@
       "Give": "Give to…",
       "Take": "Take…",
       "GiveCurrency": "Give Money",
-      "TakeCurrency": "Take Money"
+      "TakeCurrency": "Take Money",
+      "Buy": "Buy…",
+      "Sell": "Sell…"
     },
     "Dialog": {
       "Give": "Give",
@@ -22,32 +24,54 @@
       "Owned": "{quantity} in stack",
       "Contents": "Container with {count} items inside, which go along",
       "Amount": "Amount",
-      "Available": "Available"
+      "Available": "Available",
+      "Buy": "Buy",
+      "BuyFor": "Buy for",
+      "BuyItemTitle": "Buy {name}",
+      "SoldBy": "Sold by {name}",
+      "Price": "Price",
+      "UnitPrice": "Price each",
+      "Total": "Total",
+      "Sell": "Sell",
+      "SellItemTitle": "Sell {name}",
+      "SalePrice": "Price",
+      "HalfPrice": "Half price",
+      "FullPrice": "Full price",
+      "CustomPrice": "Custom price"
     },
     "Offer": {
       "Title": {
         "Recipient": "Item Offered",
-        "GM": "Approve Transfer"
+        "GM": "Approve Transfer",
+        "Seller": "Purchase Request"
       },
       "Recipient": "{source} wants to give you {what}.",
       "GM": {
         "Give": "{user} wants {source} to give {what} to {target}.",
-        "Take": "{user} wants {target} to take {what} from {source}."
+        "Take": "{user} wants {target} to take {what} from {source}.",
+        "Buy": "{user} wants {target} to buy {what} from {source} for {price}.",
+        "BuyNoSeller": "{user} wants {target} to buy {what} for {price}.",
+        "Sell": "{user} wants {source} to sell {what} for {price}."
       },
       "Hint": "Closes on its own after a minute without an answer.",
       "Accept": "Accept",
-      "Decline": "Decline"
+      "Decline": "Decline",
+      "Seller": "{target} wants to buy {what} from {source} for {price}."
     },
     "Chat": {
       "Gave": "{source} gave {what} to {target}.",
       "Took": "{target} took {what} from {source}.",
       "Received": "{target} received {what}.",
-      "CombatReminder": "In combat: this uses {name}'s object interaction."
+      "CombatReminder": "In combat: this uses {name}'s object interaction.",
+      "Bought": "{target} bought {what} from {source} for {price}.",
+      "BoughtNoSeller": "{target} bought {what} for {price}.",
+      "Sold": "{source} sold {what} for {price}."
     },
     "Notify": {
       "Waiting": {
         "Recipient": "Waiting for {name} to accept…",
-        "GM": "Waiting for {name} to approve…"
+        "GM": "Waiting for {name} to approve…",
+        "Seller": "Waiting for {name} to agree to the sale…"
       },
       "Declined": "{name} declined.",
       "Expired": "No answer from {name}. Nothing was transferred."
@@ -71,7 +95,16 @@
       "NoQueryPermission": "Your user role isn't allowed to send requests to the GM. The GM can change the \"Query Users\" permission.",
       "NoTargets": "There is nobody you can transfer to.",
       "PickTarget": "Choose who gets it.",
-      "Failed": "The transfer failed. See the console (F12) for details."
+      "Failed": "The transfer failed. See the console (F12) for details.",
+      "NoBuyers": "None of your characters can buy this.",
+      "PickBuyer": "Choose who buys it.",
+      "NoPrice": "This item has no price, so it can't be bought.",
+      "CantAfford": "{name} can't afford {price}.",
+      "InvalidPrice": "Enter a price of 0 or more.",
+      "BuyingDisabled": "The GM has turned off buying from here.",
+      "Unidentified": "Unidentified items can't be bought.",
+      "SellingDisabled": "You can't sell items of this character.",
+      "PackLocked": "The compendium \"{name}\" is locked. The GM has to unlock it first."
     },
     "Settings": {
       "ApprovalMode": {
@@ -80,7 +113,7 @@
         "Choices": {
           "instant": "Nobody: transfers happen right away",
           "recipient": "The recipient's player (the GM answers if they're offline)",
-          "gm": "The GM, for every give and take"
+          "gm": "The GM, for every give, take, purchase and sale"
         }
       },
       "GiveTargets": {
@@ -124,7 +157,38 @@
       "TokenDrop": {
         "Name": "Give by Dropping onto a Token",
         "Hint": "Dropping one of your items onto another character's token opens the give dialog."
+      },
+      "Buying": {
+        "Name": "Buying",
+        "Hint": "Players can use \"Buy…\" in an item's menu to buy it and pay its price. From a character, NPC or group whose sheet they can see, the money goes to the seller; buying from another player's character needs that player's OK. Copies of items from the Items sidebar and compendiums just cost the money. The GM can always buy for anyone.",
+        "Choices": {
+          "off": "Off",
+          "actors": "From characters, NPCs and groups",
+          "all": "Also from the Items sidebar and compendiums"
+        }
+      },
+      "AllowSelling": {
+        "Name": "Selling",
+        "Hint": "Players can sell items of their characters, and of groups they belong to when taking from the party is allowed, with \"Sell…\" in the item's menu. The item goes into the \"Sold Items\" world compendium (a folder per seller) and the seller gets the money: half price by default, full price for gemstones, art objects, trade goods and treasure, or a custom price."
       }
+    },
+    "Undo": {
+      "Button": "Undo this transfer",
+      "Title": "Undo Transfer",
+      "Confirm": "Reverse this transfer? Items and money go back to where they came from.",
+      "Done": "Undone by {name}.",
+      "Error": {
+        "Missing": "Can't undo: the item or one of the characters no longer exists.",
+        "ItemChanged": "Can't undo: {name} no longer has all of the item (it was used, moved or sold since).",
+        "MoneySpent": "Can't undo: {name} no longer has the money.",
+        "NotAllowed": "Can't undo: this message touches characters its player doesn't own.",
+        "AlreadyUndone": "This transfer has already been undone.",
+        "Failed": "The undo failed partway. See the console (F12) for details.",
+        "PackLocked": "Can't undo: the compendium \"{name}\" is locked."
+      }
+    },
+    "Sell": {
+      "Compendium": "Sold Items"
     }
   }
 }

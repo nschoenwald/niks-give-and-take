@@ -142,6 +142,65 @@
   text-align: center;
 }
 
+/* Price (buy dialog) */
+.ngt-dialog .ngt-price .form-fields,
+.ngt-dialog .ngt-price-total .form-fields {
+  justify-content: flex-end;
+  gap: var(--ngt-gap);
+  font-variant-numeric: tabular-nums;
+}
+
+.ngt-dialog .ngt-price input[type="number"] {
+  flex: 0 0 6rem;
+  text-align: right;
+}
+
+.ngt-dialog .ngt-denomination-abbr {
+  flex: 0 0 auto;
+  color: var(--ngt-muted);
+}
+
+/* Sale price (sell dialog) */
+.ngt-dialog .ngt-sale-price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ngt-dialog .ngt-sale-option {
+  display: flex;
+  align-items: center;
+  gap: var(--ngt-gap);
+  min-height: 1.75rem;
+}
+
+.ngt-dialog .ngt-sale-option input[type="radio"] {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.ngt-dialog .ngt-sale-label {
+  flex: 1;
+}
+
+.ngt-dialog .ngt-sale-amount,
+.ngt-dialog .ngt-sale-custom {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ngt-dialog .ngt-sale-custom input[type="number"] {
+  width: 6rem;
+  text-align: right;
+}
+
+.ngt-dialog .ngt-sale-option.ngt-empty {
+  opacity: 0.5;
+}
+
 /* Currency */
 .ngt-dialog .ngt-currency {
   display: grid;
@@ -211,6 +270,49 @@
 
 .ngt-card p {
   margin: 0;
+}
+
+.ngt-card .ngt-card-undone {
+  margin-top: 0.125rem;
+  font-size: var(--font-size-12, 0.75rem);
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* An undone transfer stays in the log, struck through */
+.ngt-card.ngt-undone .ngt-card-text {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.ngt-card.ngt-undone .ngt-card-img {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+/* Undo button (GM only) */
+.ngt-card .ngt-undo-button {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: 1.5rem;
+  height: 1.5rem;
+  min-height: 0;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: var(--font-size-11, 0.6875rem);
+  line-height: 1;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.ngt-card .ngt-undo-button:hover,
+.ngt-card .ngt-undo-button:focus-visible {
+  opacity: 1;
+  border-color: currentColor;
 }
 
 .ngt-card .ngt-card-reminder {

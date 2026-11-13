@@ -1,0 +1,46 @@
+<div class="ngt-form ngt-buy" data-unit-price="{{price.exact}}" data-shown-unit="{{price.unit}}" data-fixed-quantity="{{fixedQuantity}}">
+  <header class="ngt-subject">
+    <img src="{{item.img}}" alt="">
+    <div class="ngt-subject-text">
+      <span class="ngt-name">{{item.name}}</span>
+      {{#if seller}}<span class="ngt-meta">{{seller}}</span>{{/if}}
+      {{#if item.stack}}<span class="ngt-meta">{{item.stack}}</span>{{/if}}
+      {{#if contents}}<span class="ngt-meta">{{contents}}</span>{{/if}}
+    </div>
+  </header>
+
+  {{> "modules/niks-give-and-take/templates/targets.hbs"}}
+
+  {{#if quantity}}
+  <div class="form-group ngt-quantity">
+    <label>{{localize "NGT.Dialog.Quantity"}}</label>
+    <div class="form-fields">
+      {{#if quantity.max}}
+      <input type="range" data-quantity min="1" max="{{quantity.max}}" step="1" value="{{quantity.value}}">
+      <input type="number" name="quantity" data-quantity min="1" max="{{quantity.max}}" step="1" value="{{quantity.value}}">
+      {{else}}
+      <input type="number" name="quantity" data-quantity min="1" step="1" value="{{quantity.value}}">
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+
+  <div class="form-group ngt-price">
+    <label>{{price.label}}</label>
+    <div class="form-fields">
+      {{#if price.editable}}
+      <input type="number" name="unitPrice" data-unit-price min="0" step="any" value="{{price.unit}}">
+      <span class="ngt-denomination-abbr">{{price.abbr}}</span>
+      {{else}}
+      <span class="ngt-price-value">{{price.unitText}}</span>
+      {{/if}}
+    </div>
+  </div>
+
+  <div class="form-group ngt-price-total">
+    <label>{{localize "NGT.Dialog.Total"}}</label>
+    <div class="form-fields">
+      <strong data-total>{{price.totalText}}</strong>
+    </div>
+  </div>
+</div>

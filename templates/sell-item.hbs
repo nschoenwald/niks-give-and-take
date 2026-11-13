@@ -1,0 +1,38 @@
+<div class="ngt-form ngt-sell" data-unit-price="{{price.exact}}" data-fixed-quantity="{{fixedQuantity}}">
+  <header class="ngt-subject">
+    <img src="{{item.img}}" alt="">
+    <div class="ngt-subject-text">
+      <span class="ngt-name">{{item.name}}</span>
+      {{#if item.stack}}<span class="ngt-meta">{{item.stack}}</span>{{/if}}
+      {{#if contents}}<span class="ngt-meta">{{contents}}</span>{{/if}}
+    </div>
+  </header>
+
+  {{#if quantity}}
+  <div class="form-group ngt-quantity">
+    <label>{{localize "NGT.Dialog.Quantity"}}</label>
+    <div class="form-fields">
+      <input type="range" data-quantity min="1" max="{{quantity.max}}" step="1" value="{{quantity.value}}">
+      <input type="number" name="quantity" data-quantity min="1" max="{{quantity.max}}" step="1" value="{{quantity.value}}">
+    </div>
+  </div>
+  {{/if}}
+
+  <fieldset class="ngt-sale-price">
+    <legend>{{localize "NGT.Dialog.SalePrice"}}</legend>
+    {{#each options}}
+    <label class="ngt-sale-option{{#if disabled}} ngt-empty{{/if}}">
+      <input type="radio" name="priceMode" value="{{value}}" {{checked checked}} {{disabled disabled}}>
+      <span class="ngt-sale-label">{{label}}</span>
+      {{#if custom}}
+      <span class="ngt-sale-custom">
+        <input type="number" name="customPrice" min="0" step="any" value="{{../price.customValue}}">
+        <span class="ngt-denomination-abbr">{{../price.abbr}}</span>
+      </span>
+      {{else}}
+      <span class="ngt-sale-amount" data-factor="{{factor}}"></span>
+      {{/if}}
+    </label>
+    {{/each}}
+  </fieldset>
+</div>

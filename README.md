@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Latest Release](https://img.shields.io/github/v/release/nschoenwald/niks-give-and-take?color=purple)](https://github.com/nschoenwald/niks-give-and-take/releases/latest)
 
-Lets players hand items and money to other characters and to the party, and take them from the party's shared stash, for **Foundry VTT (v14)** and **D&D 5e**. Players don't need to own the other character: the GM's client does the transfer in the background.
+Lets players hand items and money to other characters and to the party, take them from the party's shared stash, buy items for their price and sell loot, for **Foundry VTT (v14)** and **D&D 5e**. Players don't need to own the other character: the GM's client does the transfer in the background.
 
 ---
 
@@ -20,7 +20,10 @@ Lets players hand items and money to other characters and to the party, and take
 - [🎁 Handing Out Items (GM)](#-handing-out-items-gm)
 - [💰 Giving Money](#-giving-money)
 - [🏕️ Taking from the Party](#️-taking-from-the-party)
+- [🛒 Buying](#-buying)
+- [🪙 Selling](#-selling)
 - [✅ Approval](#-approval)
+- [↩️ Undo (GM)](#️-undo-gm)
 - [⚙️ Settings](#️-settings)
 - [🧩 For Module Developers](#-for-module-developers)
 - [📦 Installation](#-installation)
@@ -52,7 +55,7 @@ With **[Nik's Tiny Change Logs](https://github.com/nschoenwald/niks-tiny-changel
 
 ## 🎁 Handing Out Items (GM)
 
-The GM can hand out loot straight from the **Items sidebar** or an **item compendium**: right-click a physical item and choose **Give to…**. Pick the recipient (any group actor in the world, the party's members or any player character) and how many. The recipient gets a copy; the item in the sidebar or compendium stays where it is. The copy stacks onto a matching item the recipient already has, containers come with their contents, and the chat message reads e.g. *"Bren received 3× Potion of Healing."*
+The GM can hand out loot straight from the **Items sidebar**, an **item compendium** or D&D 5e's **compendium browser**: right-click a physical item and choose **Give to…**. Pick the recipient (any group actor in the world, the party's members or any player character) and how many. The recipient gets a copy; the item in the sidebar or compendium stays where it is. The copy stacks onto a matching item the recipient already has, containers come with their contents, and the chat message reads e.g. *"Bren received 3× Potion of Healing."*
 
 Players don't see this option, since it creates new items.
 
@@ -69,6 +72,43 @@ Players who can see the party's group actor (at least **Observer** access) can t
 
 Giving to the party works like giving to a character: it's always in the recipient list. Neither giving to the party nor taking from it waits for another player's answer.
 
+## 🛒 Buying
+
+Right-click an item and choose **Buy…** to buy it for its price. This works on:
+
+- **Other actors' sheets**: any character, NPC or group whose sheet you can see (at least **Observer** access) but don't own, including other players' characters. The item moves to the buyer and the money goes to the seller.
+- **The Items sidebar, item compendiums and D&D 5e's compendium browser**: the buyer gets a copy and the money is simply spent.
+
+Pick who buys it (one of your characters, or a group one of your characters belongs to, which then pays from its own funds) and, for stacks, how many. The dialog shows the price per item and the total. Players can't buy unidentified items or items without a price, and don't see Buy… on them.
+
+How the price is worked out: like in D&D 5e, an item's **Price** is for the item as listed, not for each one. *Arrows* with a quantity of 20 and a price of 1 gp cost 0.05 gp each.
+
+- **Sidebar and compendium items**: the price is for their own quantity, and the dialog starts with that many (20 arrows for 1 gp). You can buy more or fewer.
+- **Items on a sheet**: the price is for the quantity of the sidebar or compendium item they came from, so a merchant's 60 arrows still sell for 0.05 gp each. Items that didn't come from one are priced per item.
+- **Containers** cost their own price plus everything inside them.
+
+The buyer pays from their coins and gets change, the way D&D 5e's own currency handling does it (paying 5 sp with only gold takes 1 gp and gives 5 sp back). If they can't afford it, nothing happens. The seller receives the price in the item's own coin, or in smaller coins for fractions (0.5 gp → 5 sp). The chat message reads e.g. *"Bren bought 2× Potion of Healing from Mira the Merchant for 100 gp."*
+
+- **Buying from another player's character** always needs that player's OK (the GM answers when they're offline).
+- In the **GM approval** mode the GM approves every purchase. Otherwise purchases from NPCs, groups, the sidebar and compendiums happen right away.
+- The **distance** and **combat** rules apply between two characters as they do for giving.
+
+**For the GM**: Buy… is on every item, also on players' own sheets, so the GM can run a sale between any two actors. The GM's list of buyers holds the party, its members, all player characters, every group and every actor with a token on the current scene. The GM can change the price per item in the dialog (for haggling or discounts), and can sell items without a price.
+
+## 🪙 Selling
+
+Selling is for player characters and the party: right-click an item on a character or group sheet and choose **Sell…**. Players can sell from their own characters, and from groups one of their characters belongs to when **Taking from the Party** is on.
+
+Pick how many (for stacks) and the price:
+
+- **Half price** (default): half of what the item is worth, worked out the same way as for buying (per item, containers with their contents).
+- **Full price**: the default for **gemstones, art objects, trade goods and treasure** (loot of those kinds).
+- **Custom price**: any total.
+
+The seller gets the money and the item is gone from the sheet. It isn't lost: a copy goes into the **Sold Items** world compendium, in a folder named after the seller, so the GM can see what was sold and bring it back. The compendium is created on the first sale. The chat message reads e.g. *"Aria sold Silver Ring for 12.5 gp."* and links to the copy in the compendium.
+
+Players can't sell unidentified items. In the **GM approval** mode the GM approves every sale. The GM can undo a sale like any other transfer: the item returns, the money is taken back and the compendium copy is removed.
+
 ## ✅ Approval
 
 The GM picks who has to agree before something changes hands between two characters:
@@ -77,9 +117,19 @@ The GM picks who has to agree before something changes hands between two charact
 |---|---|
 | **Nobody** (default) | Transfers happen right away. |
 | **The recipient's player** | The recipient's player gets a dialog to accept or decline. If they're offline, the GM answers instead. Giving to a character you own yourself needs no answer. |
-| **The GM** | The GM accepts or declines every give and take by a player. |
+| **The GM** | The GM accepts or declines every give, take, purchase and sale by a player. |
 
 Unanswered requests close after a minute, and nothing is transferred. The GM never needs approval.
+
+## ↩️ Undo (GM)
+
+Every transfer's chat message has a small **undo** button (↺) that only the GM sees. It works for giving, taking, money, handed-out items and purchases. After a confirmation, everything goes back:
+
+- The item returns to where it came from (to the same stack if part of a stack moved, or as it was, with its contents, if all of it moved). Handed-out and bought copies from the sidebar or a compendium are simply removed, and a sold item's copy is removed from the Sold Items compendium.
+- Money goes back too: a purchase refunds the buyer exactly (including taking back the change) and takes the price back from the seller.
+- The message stays in the log, struck through, with *"Undone by …"*.
+
+Undo is refused, and nothing changes, if things have moved on since: the recipient no longer has all of the item (used, passed on or sold), or someone no longer has the money. Approval, distance and combat rules don't apply to an undo. Transfers made with chat messages turned off, or before version 14.4.0, can't be undone.
 
 ## ⚙️ Settings
 
@@ -90,6 +140,8 @@ All settings are in Foundry's **Configure Settings** window, under **Nik's Give 
 | **Approval** | Nobody | See [Approval](#-approval). |
 | **Players Can Give To** | Members of the primary party | Or all player characters and party members. Without a primary party, players can give to all player characters. |
 | **Taking from the Party** | On | Players can take items and money from a group actor they can see. |
+| **Selling** | On | Players can sell items of their characters (and of their groups, if taking from the party is on). |
+| **Buying** | Also from the Items sidebar and compendiums | Where players can buy: off, from characters, NPCs and groups only, or also copies from the Items sidebar and compendiums. The GM can always buy. |
 | **Money Transfers** | On | Turns giving and taking money on or off. |
 | **Maximum Distance** | 0 (off) | How close two characters' tokens must be on the current scene, in grid units. Doesn't apply to the party actor or to the GM. |
 | **During Combat** | Allow | Or allow with a reminder in the chat message that handing over an item uses the object interaction, or block transfers while one of the two characters is in combat. Doesn't apply to the party actor or to the GM. |
@@ -105,9 +157,15 @@ The API is available at `game.modules.get("niks-give-and-take").api` once the `r
 | `openItemDialog(item, {target})` | Opens the give (or take) dialog for an owned item, or the GM's hand-out dialog for a sidebar or compendium item. `target` preselects a recipient actor. |
 | `openCurrencyDialog(actor, {target})` | Opens the give (or take) money dialog for an actor. |
 | `requestTransfer(request)` | Transfers without a dialog, with the same checks and approval. `request`: `{kind: "item", sourceUuid, targetUuid, itemId, quantity}` or `{kind: "currency", sourceUuid, targetUuid, amounts: {gp: 5}}`. Resolves to `{status: "done" \| "declined" \| "expired" \| "error"}`. |
+| `openBuyDialog(item, {target})` | Opens the buy dialog for an item on an actor, in the sidebar or in a compendium. `target` preselects the buyer. |
+| `requestPurchase(request)` | Buys without a dialog, with the same checks and approval. `request`: `{itemUuid, targetUuid, quantity, unitPrice}`; `unitPrice` (per item, in the item's denomination) is only used for the GM. Resolves like `requestTransfer`. |
+| `openSellDialog(item)` | Opens the sell dialog for an item of a character or group. |
+| `requestSale(request)` | Sells without a dialog, with the same checks and approval. `request`: `{itemUuid, quantity, priceMode: "half" \| "full" \| "custom", customPrice}`; `customPrice` is the total, in the item's denomination. |
 | `getTargets(actor, user)` | The actors a user may transfer to from this actor. |
 
-The hook `niks-give-and-take.transferred` fires on the client that performed a transfer, with `{kind, source, target, item, quantity, amounts, user}`. `item` is the item on the recipient. `kind` is `"item"`, `"currency"` or `"grant"` (a GM handed out a sidebar or compendium item; `source` is `null`).
+The hook `niks-give-and-take.undone` fires on the GM's client after an undo, with `{message, transfer}` (`transfer` is the message's `flags["niks-give-and-take"].transfer`).
+
+The hook `niks-give-and-take.transferred` fires on the client that performed a transfer, with `{kind, source, target, item, quantity, amounts, price, user}`. `item` is the item on the recipient. `kind` is `"item"`, `"currency"`, `"grant"` (a GM handed out a sidebar or compendium item; `source` is `null`) `"buy"` (`target` bought the item from `source`, or from the sidebar or a compendium when `source` is `null`; `price` is `{value, denomination}`) or `"sell"` (`source` sold the item; `target` is `null`, `item` is the copy in the Sold Items compendium).
 
 ## 📦 Installation
 

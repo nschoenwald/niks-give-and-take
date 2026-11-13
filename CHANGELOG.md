@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.4.0] - 2026-11-13
+
+### Added
+- **Buying**: Right-click an item and choose "Buy…" to buy it for its price. Players can buy from any character, NPC or group whose sheet they can see (including other players' characters, who have to agree first), and copies of items from the Items sidebar, compendiums and the compendium browser. The buyer can be one of their characters or a group they belong to. Prices follow D&D 5e: Arrows listed at 1 gp for 20 cost 0.05 gp each. Unidentified items can't be bought by players. The money goes to the seller, change is made automatically, and a chat message tells the table who bought what for how much. A new setting controls where players can buy from.
+- **Buying for the GM**: The GM can use "Buy…" on any item to run a sale between any two actors, change the price, and sell items that have no price.
+- **Compendium Browser**: "Give to…" (GM) and "Buy…" now also work in D&D 5e's compendium browser.
+- **Selling**: "Sell…" in the item menu of character and group sheets sells an item for half price, full price or a custom price. Half price is the default; gemstones, art objects, trade goods and treasure default to full price. The seller gets the money, and the item is kept in a new "Sold Items" world compendium, in a folder per seller. Players can't sell unidentified items. A new setting turns selling on or off for players.
+- **Undo**: The GM gets an undo button on every transfer message. It puts items and money back where they came from, including refunds for purchases, and strikes the message through. It refuses if the item was used or passed on, or the money spent, in the meantime.
+
+### Changed
+- **Approval**: The GM approval mode now also covers purchases and sales.
+
 ## [14.3.0] - 2026-11-12
 
 ### Added

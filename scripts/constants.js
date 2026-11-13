@@ -10,6 +10,10 @@ export const QUERY = {
   transfer: `${MODULE_ID}.transfer`,
   /** GM → recipient's player (or the GM's own client): accept or decline an offer. */
   offer: `${MODULE_ID}.offer`,
+  /** Player → active GM: perform a purchase (the GM owns the seller and moves the money). */
+  buy: `${MODULE_ID}.buy`,
+  /** Player → active GM: perform a sale (only a GM can write to the "Sold Items" compendium). */
+  sell: `${MODULE_ID}.sell`,
   /** Player → active GM: post the chat message of a transfer the player performed, so the GM authors it. */
   message: `${MODULE_ID}.message`
 };

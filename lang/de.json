@@ -6,7 +6,9 @@
       "Give": "Geben an…",
       "Take": "Nehmen…",
       "GiveCurrency": "Geld geben",
-      "TakeCurrency": "Geld nehmen"
+      "TakeCurrency": "Geld nehmen",
+      "Buy": "Kaufen…",
+      "Sell": "Verkaufen…"
     },
     "Dialog": {
       "Give": "Geben",
@@ -22,32 +24,54 @@
       "Owned": "{quantity} im Stapel",
       "Contents": "Behälter mit {count} Gegenständen, die mitgehen",
       "Amount": "Betrag",
-      "Available": "Vorhanden"
+      "Available": "Vorhanden",
+      "Buy": "Kaufen",
+      "BuyFor": "Kaufen für",
+      "BuyItemTitle": "{name} kaufen",
+      "SoldBy": "Verkauft von {name}",
+      "Price": "Preis",
+      "UnitPrice": "Preis pro Stück",
+      "Total": "Gesamt",
+      "Sell": "Verkaufen",
+      "SellItemTitle": "{name} verkaufen",
+      "SalePrice": "Preis",
+      "HalfPrice": "Halber Preis",
+      "FullPrice": "Voller Preis",
+      "CustomPrice": "Eigener Preis"
     },
     "Offer": {
       "Title": {
         "Recipient": "Gegenstand angeboten",
-        "GM": "Übergabe bestätigen"
+        "GM": "Übergabe bestätigen",
+        "Seller": "Kaufanfrage"
       },
       "Recipient": "{source} möchte dir {what} geben.",
       "GM": {
         "Give": "{user} möchte, dass {source} {what} an {target} gibt.",
-        "Take": "{user} möchte, dass {target} {what} von {source} nimmt."
+        "Take": "{user} möchte, dass {target} {what} von {source} nimmt.",
+        "Buy": "{user} möchte, dass {target} {what} von {source} für {price} kauft.",
+        "BuyNoSeller": "{user} möchte, dass {target} {what} für {price} kauft.",
+        "Sell": "{user} möchte, dass {source} {what} für {price} verkauft."
       },
       "Hint": "Schließt sich nach einer Minute ohne Antwort von selbst.",
       "Accept": "Annehmen",
-      "Decline": "Ablehnen"
+      "Decline": "Ablehnen",
+      "Seller": "{target} möchte {what} von {source} für {price} kaufen."
     },
     "Chat": {
       "Gave": "{source} gab {what} an {target}.",
       "Took": "{target} nahm {what} von {source}.",
       "Received": "{target} erhielt {what}.",
-      "CombatReminder": "Im Kampf: Das verbraucht die Objektinteraktion von {name}."
+      "CombatReminder": "Im Kampf: Das verbraucht die Objektinteraktion von {name}.",
+      "Bought": "{target} kaufte {what} von {source} für {price}.",
+      "BoughtNoSeller": "{target} kaufte {what} für {price}.",
+      "Sold": "{source} verkaufte {what} für {price}."
     },
     "Notify": {
       "Waiting": {
         "Recipient": "Warte, bis {name} annimmt…",
-        "GM": "Warte auf die Bestätigung von {name}…"
+        "GM": "Warte auf die Bestätigung von {name}…",
+        "Seller": "Warte, bis {name} dem Verkauf zustimmt…"
       },
       "Declined": "{name} hat abgelehnt.",
       "Expired": "Keine Antwort von {name}. Es wurde nichts übergeben."
@@ -71,7 +95,16 @@
       "NoQueryPermission": "Deine Benutzerrolle darf keine Anfragen an den SL senden. Der SL kann die Berechtigung „Benutzer abfragen“ ändern.",
       "NoTargets": "Es gibt niemanden, an den du übergeben kannst.",
       "PickTarget": "Wähle aus, wer es bekommt.",
-      "Failed": "Die Übergabe ist fehlgeschlagen. Details stehen in der Konsole (F12)."
+      "Failed": "Die Übergabe ist fehlgeschlagen. Details stehen in der Konsole (F12).",
+      "NoBuyers": "Keiner deiner Charaktere kann das kaufen.",
+      "PickBuyer": "Wähle, wer es kauft.",
+      "NoPrice": "Dieser Gegenstand hat keinen Preis und kann nicht gekauft werden.",
+      "CantAfford": "{name} kann sich {price} nicht leisten.",
+      "InvalidPrice": "Gib einen Preis von 0 oder mehr ein.",
+      "BuyingDisabled": "Der SL hat das Kaufen von hier ausgeschaltet.",
+      "Unidentified": "Nicht identifizierte Gegenstände können nicht gekauft werden.",
+      "SellingDisabled": "Du kannst keine Gegenstände dieses Charakters verkaufen.",
+      "PackLocked": "Das Kompendium „{name}“ ist gesperrt. Der SL muss es zuerst entsperren."
     },
     "Settings": {
       "ApprovalMode": {
@@ -80,7 +113,7 @@
         "Choices": {
           "instant": "Niemand: Übergaben passieren sofort",
           "recipient": "Der Spieler des Empfängers (der SL antwortet, wenn er offline ist)",
-          "gm": "Der SL, bei jedem Geben und Nehmen"
+          "gm": "Der SL, bei jedem Geben, Nehmen, Kaufen und Verkaufen"
         }
       },
       "GiveTargets": {
@@ -124,7 +157,38 @@
       "TokenDrop": {
         "Name": "Geben durch Ablegen auf ein Token",
         "Hint": "Wenn du einen deiner Gegenstände auf das Token eines anderen Charakters ziehst, öffnet sich der Dialog zum Geben."
+      },
+      "Buying": {
+        "Name": "Kaufen",
+        "Hint": "Spieler können über „Kaufen…“ im Menü eines Gegenstands diesen kaufen und seinen Preis bezahlen. Bei einem Charakter, NSC oder einer Gruppe, deren Bogen sie sehen können, geht das Geld an den Verkäufer; der Kauf vom Charakter eines anderen Spielers braucht dessen Zustimmung. Kopien von Gegenständen aus der Gegenstandsleiste und aus Kompendien kosten einfach das Geld. Der SL kann immer für jeden kaufen.",
+        "Choices": {
+          "off": "Aus",
+          "actors": "Von Charakteren, NSCs und Gruppen",
+          "all": "Auch aus der Gegenstandsleiste und Kompendien"
+        }
+      },
+      "AllowSelling": {
+        "Name": "Verkaufen",
+        "Hint": "Spieler können über „Verkaufen…“ im Menü eines Gegenstands Gegenstände ihrer Charaktere verkaufen, und von Gruppen, zu denen sie gehören, wenn das Nehmen von der Gruppe erlaubt ist. Der Gegenstand kommt in das Welt-Kompendium „Verkaufte Gegenstände“ (ein Ordner pro Verkäufer) und der Verkäufer bekommt das Geld: standardmäßig den halben Preis, den vollen Preis für Edelsteine, Kunstgegenstände, Handelswaren und Schätze, oder einen eigenen Preis."
       }
+    },
+    "Undo": {
+      "Button": "Diese Übergabe rückgängig machen",
+      "Title": "Übergabe rückgängig machen",
+      "Confirm": "Diese Übergabe rückgängig machen? Gegenstände und Geld gehen dorthin zurück, woher sie kamen.",
+      "Done": "Rückgängig gemacht von {name}.",
+      "Error": {
+        "Missing": "Rückgängig nicht möglich: Der Gegenstand oder einer der Charaktere existiert nicht mehr.",
+        "ItemChanged": "Rückgängig nicht möglich: {name} hat den Gegenstand nicht mehr vollständig (er wurde inzwischen verbraucht, weitergegeben oder verkauft).",
+        "MoneySpent": "Rückgängig nicht möglich: {name} hat das Geld nicht mehr.",
+        "NotAllowed": "Rückgängig nicht möglich: Diese Nachricht betrifft Charaktere, die ihrem Spieler nicht gehören.",
+        "AlreadyUndone": "Diese Übergabe wurde bereits rückgängig gemacht.",
+        "Failed": "Das Rückgängigmachen ist mittendrin fehlgeschlagen. Details in der Konsole (F12).",
+        "PackLocked": "Rückgängig nicht möglich: Das Kompendium „{name}“ ist gesperrt."
+      }
+    },
+    "Sell": {
+      "Compendium": "Verkaufte Gegenstände"
     }
   }
 }

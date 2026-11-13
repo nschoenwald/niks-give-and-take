@@ -6,6 +6,9 @@
 /** Item types merged into an existing stack on the recipient (dnd5e itself stacks consumables on drop). */
 const STACKABLE_TYPES = new Set(["consumable", "loot"]);
 
+/** Loot subtypes that sell at full price by default (gemstones, art objects, trade goods, treasure). */
+const VALUABLE_LOOT = new Set(["gem", "art", "trade", "treasure"]);
+
 /** Item system fields reset when an item changes hands (same list as dnd5e's `_onDropResetData`). */
 const RESET_FIELDS = ["attuned", "equipped", "prepared", "crew.value"];
 
@@ -212,6 +215,169 @@ export function getCurrency(actor) {
  */
 export function currencyUpdate(currency) {
   return Object.fromEntries(Object.entries(currency).map(([k, v]) => [`system.currency.${k}`, v]));
+}
+
+/* -------------------------------------------- */
+/*  Prices                                      */
+/* -------------------------------------------- */
+
+/**
+ * A price: an amount (may be fractional) in one denomination.
+ * @typedef {{value: number, denomination: string}} Price
+ */
+
+/**
+ * @param {string} denomination
+ * @returns {number}  How many of this denomination make one of the base currency (gp = 1, sp = 10).
+ */
+function conversionOf(denomination) {
+  return CONFIG.DND5E.currencies[denomination]?.conversion ?? 1;
+}
+
+/**
+ * @param {Item} item
+ * @returns {Price}  The item's `system.price` as entered. dnd5e never multiplies it by the quantity: it is the price
+ *   of the item as listed, e.g. 1 gp for Arrows with a quantity of 20.
+ */
+export function getListedPrice(item) {
+  const price = item?.system?.price ?? {};
+  const denomination = isDenomination(price.denomination) ? price.denomination : CONFIG.DND5E.defaultCurrency;
+  return { value: Math.max(0, Number(price.value) || 0), denomination };
+}
+
+/**
+ * @param {Item|object} item  An item or a compendium index entry.
+ * @returns {boolean}  Whether the item has a price above 0.
+ */
+export function hasPrice(item) {
+  return Number(item?.system?.price?.value) > 0;
+}
+
+/**
+ * @param {Item|object} item  An item or a compendium index entry.
+ * @returns {boolean}  Whether the item is unidentified.
+ */
+export function isUnidentified(item) {
+  return item?.system?.identified === false;
+}
+
+/**
+ * @param {Item} item
+ * @returns {boolean}  Whether the item is a valuable (gemstone, art object, trade good, treasure), which sells at full
+ *   price by default instead of half.
+ */
+export function isValuable(item) {
+  return (item?.type === "loot") && VALUABLE_LOOT.has(item.system?.type?.value);
+}
+
+/**
+ * How many items the listed price is for.
+ * - Sidebar and compendium items: their own quantity (Arrows: 20).
+ * - Items on an actor: the quantity of the sidebar or compendium item they were created from, since their own
+ *   quantity changes as they're used or sold. Without one, the price is for a single item.
+ * @param {Item} item
+ * @returns {Promise<number>}
+ */
+async function bundleSize(item) {
+  if ( !item.parent ) return Math.max(1, getQuantity(item));
+  const sourceId = item._stats?.compendiumSource ?? item.flags?.core?.sourceId;
+  if ( !sourceId ) return 1;
+  try {
+    const original = await fromUuid(sourceId);
+    if ( (original instanceof Item) && !original.parent ) return Math.max(1, getQuantity(original));
+  } catch(err) {
+    // The original's compendium may be gone; fall back to a single item
+  }
+  return 1;
+}
+
+/**
+ * @param {Item} item
+ * @returns {Promise<Price>}  The price of a single item: the listed price divided by the bundle it is for.
+ */
+export async function getUnitPrice(item) {
+  const { value, denomination } = getListedPrice(item);
+  return { value: value / await bundleSize(item), denomination };
+}
+
+/**
+ * The price of buying a quantity of an item. Containers add the price of everything inside them.
+ * @param {Item} item
+ * @param {number} quantity
+ * @returns {Promise<Price>}  In the item's own denomination.
+ */
+export async function getPrice(item, quantity) {
+  const { value, denomination } = await getUnitPrice(item);
+  let total = value * quantity;
+  if ( isContainer(item) ) {
+    const contents = await item.system.allContainedItems;
+    for ( const inner of contents ?? [] ) {
+      const price = await getUnitPrice(inner);
+      total += price.value * getQuantity(inner) * conversionOf(denomination) / conversionOf(price.denomination);
+    }
+  }
+  return { value: total, denomination };
+}
+
+/**
+ * What the buyer's currency is after paying, making change from bigger coins where needed (dnd5e's own logic).
+ * @param {Actor} actor
+ * @param {Price} price
+ * @returns {Record<string, number>|null}  The buyer's new currency, or null if they can't afford it.
+ */
+export function getPayment(actor, { value, denomination }) {
+  if ( !hasCurrency(actor) ) return null;
+  if ( !(value > 0) ) return getCurrency(actor);
+  const updates = dnd5e.applications.CurrencyManager.getActorCurrencyUpdates(actor, value, denomination,
+    { makeChange: true });
+  if ( (updates.remainder > 0) && !updates.remainder.almostEqual(0) ) return null;
+  return Object.fromEntries(Object.keys(getCurrency(actor)).map(k => [k, updates.system.currency[k] ?? 0]));
+}
+
+/**
+ * The coins a price is paid with, in the price's denomination or, for fractions, the next smaller one that comes out
+ * even (0.5 gp → 5 sp).
+ * @param {Price} price
+ * @returns {Record<string, number>}
+ */
+export function toCoins({ value, denomination }) {
+  if ( !(value > 0) ) return {};
+  const base = conversionOf(denomination);
+  const candidates = Object.keys(CONFIG.DND5E.currencies)
+    .map(key => ({ key, ratio: conversionOf(key) / base }))
+    .filter(({ ratio }) => (ratio >= 1) && Number.isInteger(Math.round(Math.log10(ratio) * 1e6) / 1e6))
+    .sort((a, b) => a.ratio - b.ratio);
+  for ( const { key, ratio } of candidates ) {
+    const amount = value * ratio;
+    if ( amount.almostEqual(Math.round(amount)) ) return { [key]: Math.round(amount) };
+  }
+  const last = candidates.at(-1) ?? { key: denomination, ratio: 1 };
+  return { [last.key]: Math.max(1, Math.round(value * last.ratio)) };
+}
+
+/**
+ * @param {Price} price
+ * @returns {string}  e.g. "12.5 gp".
+ */
+export function formatPrice({ value, denomination }) {
+  const number = new Intl.NumberFormat(game.i18n.lang, { maximumFractionDigits: 2 }).format(value);
+  return `${number} ${denominationAbbr(denomination)}`;
+}
+
+/**
+ * @param {string} denomination
+ * @returns {boolean}  Whether this is a currency denomination of the system.
+ */
+export function isDenomination(denomination) {
+  return Object.hasOwn(CONFIG.DND5E.currencies, denomination ?? "");
+}
+
+/**
+ * @param {string} denomination
+ * @returns {string}  The denomination's abbreviation, e.g. "gp".
+ */
+export function denominationAbbr(denomination) {
+  return game.i18n.localize(CONFIG.DND5E.currencies[denomination]?.abbreviation ?? denomination);
 }
 
 /**

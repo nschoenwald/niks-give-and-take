@@ -4,7 +4,7 @@
  */
 
 import * as sys from "./dnd5e.js";
-import { COMBAT, TARGETS, getSetting } from "./settings.js";
+import { BUY, COMBAT, TARGETS, getSetting } from "./settings.js";
 
 /**
  * @param {Actor} actor
@@ -248,21 +248,200 @@ export function checkTransfer({ kind, source, target, item, quantity, amounts, u
 
   else return fail("Missing");
 
-  // Distance and combat rules only apply between two characters, not to the party's stash. The GM is exempt.
+  return tableRules({ source, target, user, scene, remindable: kind === "item" });
+}
+
+/**
+ * Distance and combat rules. They only apply between two characters, not to a group's stash. The GM is exempt.
+ * @param {object} config
+ * @param {Actor} config.source
+ * @param {Actor} config.target
+ * @param {User} config.user
+ * @param {Scene|null} config.scene
+ * @param {boolean} config.remindable  Whether the "remind" combat rule applies (items, not money).
+ * @returns {{ok: true, remind: boolean}|{ok: false, reason: string, data?: object}}
+ */
+function tableRules({ source, target, user, scene, remindable }) {
   let remind = false;
   if ( !user.isGM && !sys.isGroup(source) && !sys.isGroup(target) ) {
     const maxDistance = getSetting("maxDistance");
     if ( maxDistance > 0 ) {
       const distance = tokenDistance(source, target, scene);
-      if ( distance === null ) return fail("NoTokens");
-      if ( distance > maxDistance ) return fail("TooFar", { distance: maxDistance, units: scene.grid.units });
+      if ( distance === null ) return { ok: false, reason: "NoTokens" };
+      if ( distance > maxDistance ) {
+        return { ok: false, reason: "TooFar", data: { distance: maxDistance, units: scene.grid.units } };
+      }
     }
     const combatRule = getSetting("combatRule");
     if ( (combatRule !== COMBAT.allow) && (inCombat(source) || inCombat(target)) ) {
-      if ( combatRule === COMBAT.block ) return fail("InCombat");
-      remind = kind === "item";
+      if ( combatRule === COMBAT.block ) return { ok: false, reason: "InCombat" };
+      remind = remindable;
     }
   }
-
   return { ok: true, remind };
+}
+
+/* -------------------------------------------- */
+/*  Buying                                      */
+/* -------------------------------------------- */
+
+/**
+ * Whether the user may buy from a seller.
+ * - The GM: from any actor, and copies from the sidebar and compendiums.
+ * - Players (setting "buying"): from characters, NPCs and groups they can see (Observer) but don't own, and with
+ *   "all" also copies of sidebar and compendium items they can see.
+ * @param {Actor|null} source  The seller, or null for a sidebar or compendium item.
+ * @param {User} [user]
+ * @returns {boolean}
+ */
+export function canBuyFrom(source, user=game.user) {
+  if ( source && !sys.canHoldItems(source) ) return false;
+  if ( user.isGM ) return true;
+  const mode = getSetting("buying");
+  if ( mode === BUY.off ) return false;
+  if ( !source ) return mode === BUY.all;
+  return can(source, user, "OBSERVER") && !can(source, user, "OWNER");
+}
+
+/**
+ * Whether the user may sell items of this actor (into the "Sold Items" compendium, for money from nowhere). Selling is
+ * meant for player characters and groups:
+ * - The GM: any character or group.
+ * - Players (setting "allowSelling"): characters and groups they own, and groups one of their characters is a member
+ *   of when taking from groups is allowed.
+ * @param {Actor} actor
+ * @param {User} [user]
+ * @returns {boolean}
+ */
+export function canSellFrom(actor, user=game.user) {
+  if ( !(sys.isCharacter(actor) || sys.isGroup(actor)) || !sys.hasCurrency(actor) ) return false;
+  if ( user.isGM ) return true;
+  if ( !getSetting("allowSelling") ) return false;
+  if ( can(actor, user, "OWNER") ) return true;
+  return sys.isGroup(actor) && getSetting("allowTake") && memberGroups(user).some(g => sameActor(g, actor));
+}
+
+/** How the sale price is set. */
+export const SALE_PRICE = { half: "half", full: "full", custom: "custom" };
+
+/**
+ * Check a sale for the user who asked for it, and work out the price.
+ * @param {object} config
+ * @param {Actor} config.source              The seller.
+ * @param {Item} config.item
+ * @param {number} config.quantity
+ * @param {string} config.priceMode          A SALE_PRICE value.
+ * @param {number|null} [config.customPrice] Total price for "custom", in the item's denomination.
+ * @param {User} config.user
+ * @returns {Promise<{ok: true, price: sys.Price}|{ok: false, reason: string, data?: object}>}
+ */
+export async function checkSale({ source, item, quantity, priceMode, customPrice=null, user }) {
+  const fail = (reason, data) => ({ ok: false, reason, data });
+  if ( !source || !item || (item.parent !== source) ) return fail("Missing");
+  if ( !sys.isGiveable(item) ) return fail("NotGiveable");
+  if ( !Number.isInteger(quantity) || (quantity < 1) || (quantity > sys.getQuantity(item)) ) {
+    return fail("QuantityChanged");
+  }
+  if ( !canSellFrom(source, user) ) return fail("SellingDisabled");
+  if ( !user.isGM && sys.isUnidentified(item) ) return fail("Unidentified");
+
+  let price;
+  if ( priceMode === SALE_PRICE.custom ) {
+    const value = Number(customPrice);
+    if ( (customPrice === null) || (customPrice === "") || !Number.isFinite(value) || (value < 0) ) {
+      return fail("InvalidPrice");
+    }
+    price = { value, denomination: sys.getListedPrice(item).denomination };
+  } else if ( (priceMode === SALE_PRICE.half) || (priceMode === SALE_PRICE.full) ) {
+    const base = await sys.getPrice(item, quantity);
+    price = { value: priceMode === SALE_PRICE.half ? base.value / 2 : base.value, denomination: base.denomination };
+  }
+  else return fail("InvalidPrice");
+  return { ok: true, price };
+}
+
+/**
+ * Whether the user can see a sidebar or compendium item.
+ * @param {Item} item
+ * @param {User} user
+ * @returns {boolean}
+ */
+function canSeeUnowned(item, user) {
+  if ( user.isGM ) return true;
+  if ( item.pack ) return !!game.packs.get(item.pack)?.testUserPermission(user, "OBSERVER");
+  return item.testUserPermission(user, "OBSERVER");
+}
+
+/**
+ * Who can pay for and receive a purchase.
+ * - The GM: the primary party, its members, all player characters, every group, and every actor with a token on the
+ *   current scene (for merchants on the map).
+ * - Players: the actors they own and the groups one of their characters is a member of.
+ * The seller itself and actors without currency are left out.
+ * @param {Actor|null} source  The seller, or null for a sidebar or compendium item.
+ * @param {User} [user]
+ * @returns {Actor[]}
+ */
+export function getBuyers(source, user=game.user) {
+  if ( !canBuyFrom(source, user) ) return [];
+  let pool;
+  if ( user.isGM ) {
+    pool = partyPool(true);
+    worldGroups().forEach(a => pool.add(a));
+    for ( const token of canvas?.scene?.tokens ?? [] ) if ( token.actor ) pool.add(token.actor);
+  } else {
+    pool = new Set(game.actors.filter(a => can(a, user, "OWNER")));
+    memberGroups(user).forEach(a => pool.add(a));
+  }
+  const buyers = Array.from(pool).filter(a => sys.canHoldItems(a) && sys.hasCurrency(a) && !sameActor(a, source));
+  return sortTargets(buyers.filter((a, i) => buyers.findIndex(b => b.uuid === a.uuid) === i));
+}
+
+/**
+ * Check a purchase for the user who asked for it, and work out the price and the buyer's payment.
+ * @param {object} config
+ * @param {Actor|null} config.source   The seller, or null for a sidebar or compendium item.
+ * @param {Actor} config.target        The buyer.
+ * @param {Item} config.item
+ * @param {number} config.quantity
+ * @param {number|null} [config.unitPrice]  A price per item set by the GM (in the item's denomination). Ignored for
+ *                                          players, who always pay the item's own price.
+ * @param {User} config.user
+ * @param {Scene|null} [config.scene]
+ * @returns {Promise<{ok: true, remind: boolean, price: sys.Price, payment: Record<string, number>}
+ *   |{ok: false, reason: string, data?: object}>}
+ */
+export async function checkPurchase({ source, target, item, quantity, unitPrice=null, user, scene }) {
+  const fail = (reason, data) => ({ ok: false, reason, data });
+  if ( !item || !target ) return fail("Missing");
+  if ( source ) {
+    if ( item.parent !== source ) return fail("Missing");
+    if ( !sys.isGiveable(item) ) return fail("NotGiveable");
+    if ( !Number.isInteger(quantity) || (quantity < 1) || (quantity > sys.getQuantity(item)) ) {
+      return fail("QuantityChanged");
+    }
+  } else {
+    if ( !sys.isGrantable(item) ) return fail("NotGiveable");
+    if ( !canSeeUnowned(item, user) ) return fail("NotAllowed");
+    if ( !Number.isInteger(quantity) || (quantity < 1) ) return fail("InvalidQuantity");
+  }
+  if ( !user.isGM && sys.isUnidentified(item) ) return fail("Unidentified");
+  if ( !canBuyFrom(source, user) ) return fail("BuyingDisabled");
+  if ( !getBuyers(source, user).some(a => sameActor(a, target)) ) return fail("NotAllowed");
+
+  let price;
+  if ( user.isGM && (unitPrice !== null) && (unitPrice !== "") ) {
+    const value = Number(unitPrice);
+    if ( !Number.isFinite(value) || (value < 0) ) return fail("InvalidPrice");
+    price = { value: value * quantity, denomination: sys.getListedPrice(item).denomination };
+  }
+  else price = await sys.getPrice(item, quantity);
+  if ( !user.isGM && !(price.value > 0) ) return fail("NoPrice");
+
+  const payment = sys.getPayment(target, price);
+  if ( !payment ) return fail("CantAfford", { name: target.name, price: sys.formatPrice(price) });
+
+  const rules = source ? tableRules({ source, target, user, scene, remindable: true }) : { ok: true, remind: false };
+  if ( !rules.ok ) return rules;
+  return { ok: true, remind: rules.remind, price, payment };
 }
