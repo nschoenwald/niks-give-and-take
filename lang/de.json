@@ -169,7 +169,7 @@
       },
       "AllowSelling": {
         "Name": "Verkaufen",
-        "Hint": "Spieler können über „Verkaufen…“ im Menü eines Gegenstands Gegenstände ihrer Charaktere verkaufen, und von Gruppen, zu denen sie gehören, wenn das Nehmen von der Gruppe erlaubt ist. Der Gegenstand kommt in das Welt-Kompendium „Verkaufte Gegenstände“ (ein Ordner pro Verkäufer) und der Verkäufer bekommt das Geld: standardmäßig den halben Preis, den vollen Preis für Edelsteine, Kunstgegenstände, Handelswaren und Schätze, oder einen eigenen Preis."
+        "Hint": "Spieler können über „Verkaufen…“ im Menü eines Gegenstands Gegenstände ihrer Charaktere verkaufen, und von Gruppen, zu denen sie gehören, wenn das Nehmen von der Gruppe erlaubt ist. Der Gegenstand kommt in das Welt-Kompendium „Verkaufte Gegenstände“ (ein Ordner pro Verkäufer) und der Verkäufer bekommt das Geld: standardmäßig den halben Preis, den vollen Preis für Edelsteine, Kunstgegenstände, Handelswaren und Schätze, oder einen eigenen Preis. Ist kein SL online, können Spieler von Charakteren und Gruppen verkaufen, die ihnen gehören; die Kopie wird dann nur behalten, wenn Spieler Besitzerrechte am Kompendium haben."
       }
     },
     "Undo": {

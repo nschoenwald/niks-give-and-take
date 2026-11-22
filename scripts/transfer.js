@@ -49,7 +49,7 @@ import { APPROVAL, CHAT, getSetting } from "./settings.js";
 const { renderTemplate } = foundry.applications.handlebars;
 
 /** The world compendium sold items are kept in (`world.<name>`). Created on the first sale. */
-const SOLD_PACK_NAME = "ngt-sold-items";
+export const SOLD_PACK_NAME = "ngt-sold-items";
 const { escapeHTML } = foundry.utils;
 
 /* -------------------------------------------- */
@@ -391,6 +391,8 @@ export async function requestGrant({ itemUuid, targetUuid, quantity }) {
 
 /**
  * Ask for a purchase. The GM runs it on their own client; players send it to the active GM, who owns the seller.
+ * Without an active GM, a player buys a copy of a sidebar or compendium item for an actor they own on their own client
+ * (unless GM approval is required): nobody else's documents change.
  * @param {PurchaseRequest} request
  * @returns {Promise<object>}  The result (`status`: "done", "declined", "expired" or "error").
  */
@@ -402,9 +404,12 @@ export async function requestPurchase(request) {
 
   let result;
   if ( game.user.isGM ) result = await processPurchase(request, game.user);
+  else if ( !game.users.activeGM ) {
+    if ( !canBuyLocally(resolved, game.user) ) return report({ status: "error", reason: "NoGM" });
+    result = await processPurchase(request, game.user);
+  }
   else {
     const gm = game.users.activeGM;
-    if ( !gm ) return report({ status: "error", reason: "NoGM" });
     if ( !game.user.hasPermission("QUERY_USER") ) return report({ status: "error", reason: "NoQueryPermission" });
     const approval = getPurchaseApproval(resolved, game.user);
     if ( approval ) ui.notifications.info(tf(`Notify.Waiting.${approval.type}`, { name: approval.name }));
@@ -416,6 +421,18 @@ export async function requestPurchase(request) {
     }
   }
   return report(result);
+}
+
+/**
+ * Without an active GM, a player may buy on their own client when there is no seller (a sidebar or compendium item),
+ * they own the buyer, and no GM approval is needed.
+ * @param {object} resolved
+ * @param {User} user
+ * @returns {boolean}
+ */
+function canBuyLocally({ source, target }, user) {
+  if ( source || (getSetting("approvalMode") === APPROVAL.gm) ) return false;
+  return !!target?.testUserPermission(user, "OWNER");
 }
 
 /**
@@ -537,7 +554,9 @@ async function processPurchase(request, user) {
 /* -------------------------------------------- */
 
 /**
- * Ask for a sale. Always runs on a GM's client, since only a GM can write to the world compendium.
+ * Ask for a sale. Runs on the active GM's client, which keeps a copy in the "Sold Items" compendium. Without an active
+ * GM, a player sells from an actor they own on their own client (unless GM approval is required); the copy is then
+ * only kept when the player has owner access to an existing, unlocked "Sold Items" compendium.
  * @param {SaleRequest} request
  * @returns {Promise<object>}  The result (`status`: "done", "declined", "expired" or "error").
  */
@@ -548,9 +567,12 @@ export async function requestSale(request) {
 
   let result;
   if ( game.user.isGM ) result = await processSale(request, game.user);
+  else if ( !game.users.activeGM ) {
+    if ( !canSellLocally(resolved, game.user) ) return report({ status: "error", reason: "NoGM" });
+    result = await processSale(request, game.user);
+  }
   else {
     const gm = game.users.activeGM;
-    if ( !gm ) return report({ status: "error", reason: "NoGM" });
     if ( !game.user.hasPermission("QUERY_USER") ) return report({ status: "error", reason: "NoQueryPermission" });
     const approval = getSaleApproval(game.user);
     if ( approval ) ui.notifications.info(tf(`Notify.Waiting.${approval.type}`, { name: approval.name }));
@@ -562,6 +584,17 @@ export async function requestSale(request) {
     }
   }
   return report(result);
+}
+
+/**
+ * Without an active GM, a player may sell on their own client when they own the seller and no GM approval is needed.
+ * @param {object} resolved
+ * @param {User} user
+ * @returns {boolean}
+ */
+function canSellLocally({ source }, user) {
+  if ( getSetting("approvalMode") === APPROVAL.gm ) return false;
+  return !!source?.testUserPermission(user, "OWNER");
 }
 
 /**
@@ -657,16 +690,26 @@ async function processSale(request, user) {
     if ( !check.ok ) return { status: "error", reason: check.reason, data: check.data };
     const { source, item, quantity } = resolved;
     try {
-      const pack = await getSoldPack();
-      if ( !pack ) return { status: "error", reason: "Failed" };
-      if ( pack.locked ) return { status: "error", reason: "PackLocked", data: { name: pack.title } };
-      const folder = await getSoldFolder(pack, source.name);
       const data = await sys.buildItemData(item, quantity);
       if ( !data?.length ) throw new Error(`Could not prepare ${item.uuid} for sale`);
-      const packData = data.map(d => ({ ...foundry.utils.deepClone(d), folder: folder?.id ?? null }));
-      const created = await Item.implementation.createDocuments(packData, {
-        ...OPERATION_OPTIONS, pack: pack.collection, keepId: true
-      });
+      // A GM keeps a copy (creating the compendium if needed). A player selling without a GM only when they can write
+      // to the existing compendium; otherwise the sale goes ahead without a copy.
+      let pack = user.isGM ? await getSoldPack() : game.packs.get(`world.${SOLD_PACK_NAME}`);
+      if ( user.isGM ) {
+        if ( !pack ) return { status: "error", reason: "Failed" };
+        if ( pack.locked ) return { status: "error", reason: "PackLocked", data: { name: pack.title } };
+      }
+      else if ( pack && (pack.locked || !pack.testUserPermission(user, "OWNER")) ) pack = null;
+      let created = [];
+      if ( pack ) {
+        const folder = await getSoldFolder(pack, source.name);
+        const packData = data.map(d => ({ ...foundry.utils.deepClone(d), folder: folder?.id ?? null }));
+        created = await Item.implementation.createDocuments(packData, {
+          ...OPERATION_OPTIONS, pack: pack.collection, keepId: true
+        });
+      }
+      // Without a copy, the message names the item by its name and image
+      const sold = created[0] ?? { uuid: null, name: item.name, img: item.img };
 
       const coins = sys.toCoins(check.price);
       const have = sys.getCurrency(source);
@@ -675,20 +718,21 @@ async function processSale(request, user) {
       const removed = await removeItem(source, item, quantity);
 
       const note = {
-        kind: "sell", take: false, sourceUuid: source.uuid, targetUuid: null, itemUuid: created[0].uuid, quantity,
+        kind: "sell", take: false, sourceUuid: source.uuid, targetUuid: null, itemUuid: sold.uuid, quantity,
+        itemName: sold.uuid ? null : sold.name, itemImg: sold.uuid ? null : sold.img,
         amounts: null, price: check.price, remind: false,
         undo: {
           items: {
             target: null, added: null, quantity, source: source.uuid, removed: { ...removed, fallback: data },
-            pack: { id: pack.collection, ids: created.map(i => i.id) }
+            pack: pack ? { id: pack.collection, ids: created.map(i => i.id) } : null
           },
           currency: [{ actor: source.uuid, delta: coins }]
         }
       };
-      const summary = describe({ ...note, source, target: null, item: created[0] });
+      const summary = describe({ ...note, source, target: null, item: sold });
       await announce(note);
       Hooks.callAll(`${MODULE_ID}.transferred`, {
-        kind: "sell", source, target: null, item: created[0], quantity, amounts: null, price: check.price, user
+        kind: "sell", source, target: null, item: created[0] ?? null, quantity, amounts: null, price: check.price, user
       });
       return { status: "done", summary: summary.text };
     } catch(err) {
@@ -869,7 +913,8 @@ function describe({ kind, take, source, target, item, quantity, amounts, price }
   const isItem = kind !== "currency";
   const plainWhat = isItem ? itemLabel(item.name, quantity) : sys.formatCurrency(amounts);
   const htmlWhat = isItem
-    ? itemLabel(`@UUID[${item.uuid}]{${escapeHTML(item.name)}}`, quantity)
+    ? itemLabel(item.uuid ? `@UUID[${item.uuid}]{${escapeHTML(item.name)}}` : `<strong>${escapeHTML(item.name)}</strong>`,
+      quantity)
     : `<strong>${escapeHTML(plainWhat)}</strong>`;
   return {
     text: tf(key, { source: source?.name, target: target?.name, what: plainWhat, price: priceText }),
@@ -941,15 +986,25 @@ async function createMessage(note, user) {
   const sell = note.kind === "sell";
   const source = (grant || (buy && !note.sourceUuid)) ? null : await fromUuid(note.sourceUuid);
   const target = sell ? null : await fromUuid(note.targetUuid);
-  const item = note.itemUuid ? await fromUuid(note.itemUuid) : null;
+  // A sale made without a GM may have no copy in the compendium: then the message only names the item
+  const unarchived = sell && !note.itemUuid;
+  const item = unarchived ? { uuid: null, name: String(note.itemName ?? ""), img: String(note.itemImg ?? "") || null }
+    : (note.itemUuid ? await fromUuid(note.itemUuid) : null);
   if ( (!sell && !(target instanceof Actor)) || (note.sourceUuid && !(source instanceof Actor)) ) return;
   if ( !grant && !buy && !source ) return;
   // A sold item is the copy in the "Sold Items" compendium; everything else is the item on the recipient
-  if ( sell ? (item?.pack !== `world.${SOLD_PACK_NAME}`)
+  if ( sell ? (unarchived ? !item.name : (item?.pack !== `world.${SOLD_PACK_NAME}`))
     : ((note.kind !== "currency") && (item?.parent !== target)) ) return;
-  // Only the GM hands out items and runs purchases and sales; only someone involved in a transfer can announce it
-  if ( (grant || buy || sell) ? !user.isGM
-    : (!user.isGM && !source.testUserPermission(user, "OWNER") && !target.testUserPermission(user, "OWNER")) ) return;
+  // Only the GM hands out items. Players announce their own sales, purchases without a seller (both only run on their
+  // client without a GM) and transfers they are involved in.
+  const owns = actor => !!actor?.testUserPermission(user, "OWNER");
+  let allowed;
+  if ( user.isGM ) allowed = true;
+  else if ( grant ) allowed = false;
+  else if ( buy ) allowed = !source && owns(target);
+  else if ( sell ) allowed = owns(source);
+  else allowed = owns(source) || owns(target);
+  if ( !allowed ) return;
   let price = null;
   if ( buy || sell ) {
     const value = Number(note.price?.value);

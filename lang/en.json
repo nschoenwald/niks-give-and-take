@@ -169,7 +169,7 @@
       },
       "AllowSelling": {
         "Name": "Selling",
-        "Hint": "Players can sell items of their characters, and of groups they belong to when taking from the party is allowed, with \"Sell…\" in the item's menu. The item goes into the \"Sold Items\" world compendium (a folder per seller) and the seller gets the money: half price by default, full price for gemstones, art objects, trade goods and treasure, or a custom price."
+        "Hint": "Players can sell items of their characters, and of groups they belong to when taking from the party is allowed, with \"Sell…\" in the item's menu. The item goes into the \"Sold Items\" world compendium (a folder per seller) and the seller gets the money: half price by default, full price for gemstones, art objects, trade goods and treasure, or a custom price. Without a GM online, players can sell from characters and groups they own; the copy is then only kept if players have owner access to the compendium."
       }
     },
     "Undo": {

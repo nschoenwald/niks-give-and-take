@@ -8,7 +8,7 @@
 
 import { MODULE_ID, OPERATION_OPTIONS, logError, t, tf } from "./constants.js";
 import * as sys from "./dnd5e.js";
-import { enqueue } from "./transfer.js";
+import { SOLD_PACK_NAME, enqueue } from "./transfer.js";
 
 const { DialogV2 } = foundry.applications.api;
 const { escapeHTML } = foundry.utils;
@@ -99,6 +99,9 @@ async function planUndo(undo) {
     // Sales: remove the copy from the "Sold Items" compendium (if it's still there)
     if ( undo.items.pack ) {
       const pack = game.packs.get(undo.items.pack.id);
+      // Facts a player sent: only the "Sold Items" compendium, and only if that player can write to it
+      if ( player && pack && ((pack.collection !== `world.${SOLD_PACK_NAME}`)
+        || !pack.testUserPermission(player, "OWNER")) ) return fail("NotAllowed");
       if ( pack?.locked ) return fail("PackLocked", { name: pack.title });
       const ids = pack ? (undo.items.pack.ids ?? []).filter(id => pack.index.has(id)) : [];
       if ( ids.length ) {

@@ -10,7 +10,7 @@ Lets players hand items and money to other characters and to the party, take the
 ---
 
 > [!NOTE]
-> Moving items between actors needs a **GM to be online**, unless the player owns both characters. Players need the **Query Users** permission, which Foundry gives to every player role by default.
+> Without a **GM online**, players can still give and take between characters they own, sell from them, and buy copies of Items sidebar and compendium items for them (unless the GM approval mode is on). Everything that touches a character or group the player doesn't own needs the GM online. Players need the **Query Users** permission, which Foundry gives to every player role by default.
 
 ---
 
@@ -91,6 +91,7 @@ The buyer pays from their coins and gets change, the way D&D 5e's own currency h
 
 - **Buying from another player's character** always needs that player's OK (the GM answers when they're offline).
 - In the **GM approval** mode the GM approves every purchase. Otherwise purchases from NPCs, groups, the sidebar and compendiums happen right away.
+- **Without a GM online**, players can only buy copies from the sidebar and compendiums, for characters and groups they own. Buying from an actor needs the GM.
 - The **distance** and **combat** rules apply between two characters as they do for giving.
 
 **For the GM**: Buy… is on every item, also on players' own sheets, so the GM can run a sale between any two actors. The GM's list of buyers holds the party, its members, all player characters, every group and every actor with a token on the current scene. The GM can change the price per item in the dialog (for haggling or discounts), and can sell items without a price.
@@ -107,7 +108,9 @@ Pick how many (for stacks) and the price:
 
 The seller gets the money and the item is gone from the sheet. It isn't lost: a copy goes into the **Sold Items** world compendium, in a folder named after the seller, so the GM can see what was sold and bring it back. The compendium is created on the first sale. The chat message reads e.g. *"Aria sold Silver Ring for 12.5 gp."* and links to the copy in the compendium.
 
-Players can't sell unidentified items. In the **GM approval** mode the GM approves every sale. The GM can undo a sale like any other transfer: the item returns, the money is taken back and the compendium copy is removed.
+Players can't sell unidentified items. In the **GM approval** mode the GM approves every sale.
+
+**Without a GM online**, players can still sell from characters and groups they own. Only a GM can create the Sold Items compendium and, by default, write to it, so these sales usually keep no copy: the chat message then only names the item. To keep copies anyway, the GM can give players owner access to the Sold Items compendium (it has to exist first, i.e. after one sale with a GM online). The GM can undo a sale like any other transfer: the item returns, the money is taken back and the compendium copy is removed.
 
 ## ✅ Approval
 
@@ -165,7 +168,7 @@ The API is available at `game.modules.get("niks-give-and-take").api` once the `r
 
 The hook `niks-give-and-take.undone` fires on the GM's client after an undo, with `{message, transfer}` (`transfer` is the message's `flags["niks-give-and-take"].transfer`).
 
-The hook `niks-give-and-take.transferred` fires on the client that performed a transfer, with `{kind, source, target, item, quantity, amounts, price, user}`. `item` is the item on the recipient. `kind` is `"item"`, `"currency"`, `"grant"` (a GM handed out a sidebar or compendium item; `source` is `null`) `"buy"` (`target` bought the item from `source`, or from the sidebar or a compendium when `source` is `null`; `price` is `{value, denomination}`) or `"sell"` (`source` sold the item; `target` is `null`, `item` is the copy in the Sold Items compendium).
+The hook `niks-give-and-take.transferred` fires on the client that performed a transfer, with `{kind, source, target, item, quantity, amounts, price, user}`. `item` is the item on the recipient. `kind` is `"item"`, `"currency"`, `"grant"` (a GM handed out a sidebar or compendium item; `source` is `null`) `"buy"` (`target` bought the item from `source`, or from the sidebar or a compendium when `source` is `null`; `price` is `{value, denomination}`) or `"sell"` (`source` sold the item; `target` is `null`, `item` is the copy in the Sold Items compendium, or `null` when a player sold without a GM and no copy was kept).
 
 ## 📦 Installation
 

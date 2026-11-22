@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.5.0] - 2026-11-14
+
+### Changed
+- **Without a GM Online**: Players can now sell items from characters and groups they own, and buy copies of items from the Items sidebar and compendiums for them, while no GM is online. Without a GM, a sold item is only kept in the Sold Items compendium if the GM has given players owner access to it. Otherwise the chat message just names the item. In the GM approval mode, these still wait for a GM. Giving and taking between characters a player owns already worked without a GM.
+
 ## [14.4.0] - 2026-11-13
 
 ### Added
